@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>کیف مارکت | فروشگاه کیف زنانه</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f8f3eb;color:#493629;font-family:Tahoma,Arial,sans-serif}
+header{background:#493629;color:white;text-align:center;padding:28px 12px}
+header h1{margin:0 0 10px;font-size:30px}
+nav{background:#72553e;padding:14px;text-align:center}
+nav a{color:white;text-decoration:none;margin:0 12px}
+.hero{text-align:center;padding:35px 15px;background:#eadcc9}
+.hero h2{font-size:25px}
+.container{max-width:1000px;margin:25px auto;padding:12px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+.card{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 3px 12px #0001}
+.photo{height:150px;background:#eee3d5;border-radius:9px;display:grid;place-items:center;font-size:65px}
+.price{color:#92653c;font-weight:bold}
+button{background:#654832;color:white;border:0;border-radius:7px;padding:11px 18px;cursor:pointer}
+button:hover{background:#8b6849}
+#cart{background:white;padding:18px;border-radius:12px;margin-top:30px}
+footer{text-align:center;background:#493629;color:white;padding:22px;margin-top:35px}
+</style>
+</head>
+<body>
+<header>
+<h1>کیف مارکت</h1>
+<p>انتخابی شیک برای هر روز شما</p>
+</header>
+<nav>
+<a href="#home">خانه</a>
+<a href="#products">محصولات</a>
+<a href="#cart">سبد خرید</a>
+</nav>
+<section class="hero" id="home">
+<h2>به کیف مارکت خوش آمدید</h2>
+<p>مجموعه‌ای از کیف‌های زنانه روزمره، اسپرت و مجلسی</p>
+</section>
+<main class="container">
+<h2 id="products">محصولات فروشگاه</h2>
+<div class="products" id="productList"></div>
+<section id="cart">
+<h2>سبد خرید شما</h2>
+<div id="cartItems">سبد خرید خالی است.</div>
+<h3 id="total">مجموع: ۰ تومان</h3>
+<button onclick="order()">ثبت درخواست سفارش</button>
+</section>
+</main>
+<footer>
+<p>کیف مارکت | فروشگاه کیف زنانه</p>
+<p>برای ثبت سفارش با فروشگاه تماس بگیرید.</p>
+</footer>
+<script>
+const products=[
+{name:"کیف دستی کلاسیک",price:850000,category:"روزمره",icon:"👜"},
+{name:"کیف دوشی اسپرت",price:690000,category:"اسپرت",icon:"🎒"},
+{name:"کیف مجلسی زنانه",price:1200000,category:"مجلسی",icon:"👛"},
+{name:"کیف روزمره",price:750000,category:"روزمره",icon:"👜"},
+{name:"کیف اسپرت کوچک",price:590000,category:"اسپرت",icon:"🎒"},
+{name:"کیف مجلسی شیک",price:1450000,category:"مجلسی",icon:"👝"}
+];
+let cart=[];
+const fa=n=>n.toLocaleString("fa-IR");
+function render(){
+document.getElementById("productList").innerHTML=products.map((p,i)=>`
+<div class="card">
+<div class="photo">${p.icon}</div>
+<h3>${p.name}</h3>
+<p>${p.category}</p>
+<p class="price">${fa(p.price)} تومان</p>
+<button onclick="add(${i})">افزودن به سبد</button>
+</div>`).join("");
+showCart();
+}
+function add(i){cart.push(i);showCart();}
+function showCart(){
+let el=document.getElementById("cartItems");
+el.innerHTML=cart.length?cart.map((i,j)=>`
+<p>${products[i].name} — ${fa(products[i].price)} تومان
+<button onclick="removeItem(${j})">حذف</button></p>`).join(""):"سبد خرید خالی است.";
+document.getElementById("total").textContent="مجموع: "+fa(cart.reduce((s,i)=>s+products[i].price,0))+" تومان";
+}
+function removeItem(j){cart.splice(j,1);showCart();}
+function order(){
+if(!cart.length){alert("سبد خرید خالی است");return;}
+alert("این نسخه آزمایشی است و هنوز ثبت سفارش واقعی فعال نشده است.");
+}
+render();
+</script>
+</body>
+</html>

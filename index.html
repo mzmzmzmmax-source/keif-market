@@ -161,67 +161,193 @@
   <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const fmt=n=>new Intl.NumberFormat('fa-IR').format(Number(n)||0)+' تومان';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let products=[];
-let categories=[];
-let cart=JSON.parse(localStorage.getItem('km_cart')||'{}');
-let active='همه';
-const grid=document.getElementById('productsGrid');
-const categoryList=document.getElementById('categoryList');
-function saveCart(){localStorage.setItem('km_cart',JSON.stringify(cart));}
-function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
-function renderCategories(){
- const icons=['👜','🤎','✨','🎒','👝','🧡'];
- const all=[{id:'همه',name:'همه کیف‌ها'},...categories];
- categoryList.innerHTML=all.map((c,i)=>`<button class="cat ${active===String(c.id)?'active':''}" data-category="${esc(c.id)}"><span class="emoji">${icons[i%icons.length]}</span><span><b>${esc(c.name)}</b><small>${i===0?'مشاهده مجموعه':'مشاهده محصولات'}</small></span></button>`).join('');
- categoryList.querySelectorAll('.cat').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.category;renderCategories();renderProducts()}));
-}
-function renderProducts(){
- const q=document.getElementById('search').value.trim().toLocaleLowerCase('fa');
- let arr=products.filter(p=>(active==='همه'||String(p.category_id)===active)&&String(p.name||'').toLocaleLowerCase('fa').includes(q));
- const sort=document.getElementById('sort').value;
- if(sort==='low')arr.sort((a,b)=>Number(a.price)-Number(b.price));
- if(sort==='high')arr.sort((a,b)=>Number(b.price)-Number(a.price));
- grid.innerHTML=arr.length?arr.map(p=>{
-  const category=p.categories?.name||categories.find(c=>String(c.id)===String(p.category_id))?.name||'کیف زنانه';
-  const image=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy">`:`<div class="bagshape tone1"></div>`;
-  return `<article class="product"><div class="productvisual"><span class="tag">${esc(category)}</span>${image}</div><div class="productbody"><h3>${esc(p.name)}</h3><p>${esc(p.description||'انتخابی از کیف مارکت')}</p><div class="price-row"><span class="price">${fmt(p.price)}</span><button class="add" onclick="addToCart(${Number(p.id)})">افزودن +</button></div></div></article>`;
- }).join(''):'<div class="empty">محصول فعالی برای نمایش پیدا نشد.</div>';
-}
-function addToCart(id){const p=products.find(x=>Number(x.id)===Number(id));if(!p)return;cart[id]=(cart[id]||0)+1;saveCart();renderCart();toast('به سبد خرید اضافه شد');}
-function renderCart(){
- const entries=Object.entries(cart).filter(([id,n])=>n>0&&products.some(p=>Number(p.id)===Number(id)));
- const count=entries.reduce((a,[id,n])=>a+n,0);
- document.getElementById('cartCount').textContent=count.toLocaleString('fa-IR');
- let total=0;
- document.getElementById('cartItems').innerHTML=entries.length?entries.map(([id,n])=>{const p=products.find(x=>Number(x.id)===Number(id));total+=Number(p.price)*n;return `<div class="cartitem"><div><b>${esc(p.name)}</b><div class="note">${fmt(p.price)}</div></div><div class="qty"><button onclick="changeQty(${Number(id)},-1)">−</button><span>${n.toLocaleString('fa-IR')}</span><button onclick="changeQty(${Number(id)},1)">+</button></div></div>`}).join(''):'<div class="empty">سبد خریدت هنوز خالی است.</div>';
- document.getElementById('cartTotal').textContent=fmt(total);
-}
-function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];saveCart();renderCart();}
-async function loadStore(){
- const msg=document.getElementById('loadMessage');
- try{
-  const [catResult,productResult]=await Promise.all([
-   db.from('categories').select('id,name').eq('is_active',true).order('name'),
-   db.from('products').select('id,name,description,price,stock,image_url,is_active,category_id,categories(name)').eq('is_active',true).order('created_at',{ascending:false})
-  ]);
-  if(catResult.error)throw new Error('دریافت دسته‌بندی‌ها: '+catResult.error.message);
-  if(productResult.error)throw new Error('دریافت محصولات: '+productResult.error.message);
-  categories=catResult.data||[];products=productResult.data||[];
-  renderCategories();renderProducts();renderCart();
-  msg.textContent=products.length?'':'هنوز محصول فعالی برای نمایش ثبت نشده است.';
- }catch(err){msg.textContent='خطا در دریافت اطلاعات فروشگاه: '+err.message;grid.innerHTML='<div class="empty">بارگذاری محصولات انجام نشد. تنظیمات دسترسی خواندن عمومی در Supabase باید بررسی شود.</div>';console.error(err);}
-}
-document.getElementById('search').addEventListener('input',renderProducts);
-document.getElementById('sort').addEventListener('change',renderProducts);
-document.getElementById('cartOpen').onclick=()=>document.getElementById('cartOverlay').classList.add('show');
-document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).classList.remove('show'));
-document.getElementById('checkout').onclick=()=>toast('ثبت سفارش و پرداخت در نسخه بعد فعال می‌شود');
-loadStore();
+(function(){
+  'use strict';
+
+  // ===== تنظیمات =====
+  const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
+
+  // ===== ابزارهای امن =====
+  const fmt = n => new Intl.NumberFormat('fa-IR').format(Number(n) || 0) + ' تومان';
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function safeGet(key, fallback){ try { return JSON.parse(localStorage.getItem(key) || fallback); } catch(e){ return JSON.parse(fallback); } }
+  function safeSet(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ /* ignore */ } }
+
+  // ===== وضعیت =====
+  let products = [];
+  let categories = [];
+  let cart = safeGet('km_cart', '{}');
+  let active = 'همه';
+
+  const grid = document.getElementById('productsGrid');
+  const categoryList = document.getElementById('categoryList');
+  const loadMessage = document.getElementById('loadMessage');
+  const toastEl = document.getElementById('toast');
+
+  function toast(t){ toastEl.textContent = t; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 1900); }
+
+  // ===== رندر دسته‌بندی‌ها =====
+  function renderCategories(){
+    const icons = ['👜','🤎','✨','🎒','👝','🧡'];
+    const all = [{ id:'همه', name:'همه کیف‌ها' }, ...categories];
+    categoryList.innerHTML = all.map((c, i) => `
+      <button class="cat ${active === String(c.id) ? 'active' : ''}" data-category="${esc(c.id)}">
+        <span class="emoji">${icons[i % icons.length]}</span>
+        <span><b>${esc(c.name)}</b><small>${i === 0 ? 'مشاهده مجموعه' : 'مشاهده محصولات'}</small></span>
+      </button>`).join('');
+    categoryList.querySelectorAll('.cat').forEach(b => {
+      b.addEventListener('click', () => { active = b.dataset.category; renderCategories(); renderProducts(); });
+    });
+  }
+
+  // ===== رندر محصولات =====
+  function renderProducts(){
+    const q = document.getElementById('search').value.trim().toLocaleLowerCase('fa');
+    let arr = products.filter(p =>
+      (active === 'همه' || String(p.category_id) === active) &&
+      String(p.name || '').toLocaleLowerCase('fa').includes(q)
+    );
+    const sort = document.getElementById('sort').value;
+    if (sort === 'low') arr.sort((a,b) => Number(a.price) - Number(b.price));
+    if (sort === 'high') arr.sort((a,b) => Number(b.price) - Number(a.price));
+
+    if (!arr.length) {
+      grid.innerHTML = '<div class="empty">محصول فعالی برای نمایش پیدا نشد.</div>';
+      return;
+    }
+
+    grid.innerHTML = arr.map(p => {
+      const category = p.categories?.name ||
+        categories.find(c => String(c.id) === String(p.category_id))?.name ||
+        'کیف زنانه';
+      const image = p.image_url
+        ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="bagshape tone1"></div>`;
+      return `
+        <article class="product">
+          <div class="productvisual">
+            <span class="tag">${esc(category)}</span>
+            ${image}
+          </div>
+          <div class="productbody">
+            <h3>${esc(p.name)}</h3>
+            <p>${esc(p.description || 'انتخابی از کیف مارکت')}</p>
+            <div class="price-row">
+              <span class="price">${fmt(p.price)}</span>
+              <button class="add" data-id="${Number(p.id)}">افزودن +</button>
+            </div>
+          </div>
+        </article>`;
+    }).join('');
+
+    // رویداد کلیک دکمه‌های افزودن (به‌جای onclick درون‌خطی)
+    grid.querySelectorAll('.add').forEach(btn => {
+      btn.addEventListener('click', () => addToCart(Number(btn.dataset.id)));
+    });
+  }
+
+  // ===== سبد خرید =====
+  window.addToCart = function(id){
+    const p = products.find(x => Number(x.id) === Number(id));
+    if (!p) return;
+    cart[id] = (cart[id] || 0) + 1;
+    safeSet('km_cart', cart);
+    renderCart();
+    toast('به سبد خرید اضافه شد');
+  };
+
+  window.changeQty = function(id, d){
+    cart[id] = (cart[id] || 0) + d;
+    if (cart[id] <= 0) delete cart[id];
+    safeSet('km_cart', cart);
+    renderCart();
+  };
+
+  function renderCart(){
+    const entries = Object.entries(cart).filter(([id, n]) =>
+      n > 0 && products.some(p => Number(p.id) === Number(id))
+    );
+    const count = entries.reduce((a, [, n]) => a + n, 0);
+    document.getElementById('cartCount').textContent = count.toLocaleString('fa-IR');
+    let total = 0;
+    document.getElementById('cartItems').innerHTML = entries.length
+      ? entries.map(([id, n]) => {
+          const p = products.find(x => Number(x.id) === Number(id));
+          total += Number(p.price) * n;
+          return `<div class="cartitem">
+            <div><b>${esc(p.name)}</b><div class="note">${fmt(p.price)}</div></div>
+            <div class="qty">
+              <button onclick="changeQty(${Number(id)}, -1)">−</button>
+              <span>${n.toLocaleString('fa-IR')}</span>
+              <button onclick="changeQty(${Number(id)}, 1)">+</button>
+            </div>
+          </div>`;
+        }).join('')
+      : '<div class="empty">سبد خریدت هنوز خالی است.</div>';
+    document.getElementById('cartTotal').textContent = fmt(total);
+  }
+
+  // ===== دریافت داده از Supabase =====
+  async function loadStore(){
+    loadMessage.textContent = 'در حال دریافت محصولات فروشگاه...';
+    loadMessage.style.display = '';
+
+    try {
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error('کتابخانه Supabase بارگذاری نشد. اتصال اینترنت یا مسدودکننده تبلیغات را بررسی کن.');
+      }
+      const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const [catResult, productResult] = await Promise.all([
+        db.from('categories').select('id,name').eq('is_active', true).order('name'),
+        db.from('products').select('id,name,description,price,stock,image_url,is_active,category_id,categories(name)').eq('is_active', true).order('created_at', { ascending: false })
+      ]);
+
+      if (catResult.error) throw new Error('دریافت دسته‌بندی‌ها: ' + catResult.error.message);
+      if (productResult.error) throw new Error('دریافت محصولات: ' + productResult.error.message);
+
+      categories = catResult.data || [];
+      products = productResult.data || [];
+
+      renderCategories();
+      renderProducts();
+      renderCart();
+
+      loadMessage.textContent = products.length ? '' : 'هنوز محصول فعالی برای نمایش ثبت نشده است.';
+    } catch (err) {
+      console.error(err);
+      loadMessage.textContent = 'خطا در دریافت اطلاعات فروشگاه: ' + (err && err.message ? err.message : err);
+      grid.innerHTML = '<div class="empty">بارگذاری محصولات انجام نشد. تنظیمات دسترسی خواندن عمومی در Supabase باید بررسی شود.</div>';
+    } finally {
+      // در هر صورت پیام بارگذاری بعد از پایان کار مخفی می‌شود اگر داده وجود دارد
+      if (products.length) loadMessage.textContent = '';
+    }
+  }
+
+  // ===== رویدادها =====
+  function bindEvents(){
+    document.getElementById('search').addEventListener('input', renderProducts);
+    document.getElementById('sort').addEventListener('change', renderProducts);
+    document.getElementById('cartOpen').onclick = () => document.getElementById('cartOverlay').classList.add('show');
+    document.querySelectorAll('[data-close]').forEach(b => {
+      b.onclick = () => document.getElementById(b.dataset.close).classList.remove('show');
+    });
+    document.getElementById('checkout').onclick = () => toast('ثبت سفارش و پرداخت در نسخه بعد فعال می‌شود');
+  }
+
+  // ===== شروع =====
+  function start(){
+    bindEvents();
+    loadStore();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
 </script>
 </body>
-</html>>
+</html>

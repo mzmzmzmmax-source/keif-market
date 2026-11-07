@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>پنل مدیریت | کیف مارکت</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #f8f3eb;
+      --card: #ffffff;
+      --primary: #493629;
+      --primary-light: #72553e;
+      --accent: #92653c;
+      --success: #2e7d32;
+      --danger: #c62828;
+      --warning: #ef6c00;
+      --border: #e0d5c5;
+      --text: #493629;
+      --muted: #7a6a5a;
+      --radius: 12px;
+      --shadow: 0 4px 16px rgba(73, 54, 41, 0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Tahoma, "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* Login */
+    #login-section {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-card h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .login-card .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(146, 101, 60, 0.15);
+    }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      width: 100%;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-light); }
+
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover:not(:disabled) { background: #1b5e20; }
+
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover:not(:disabled) { background: #b71c1c; }
+
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-warning:hover:not(:disabled) { background: #e65100; }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover:not(:disabled) { background: #f5f0e8; }
+
+    .btn-sm {
+      padding: 7px 12px;
+      font-size: 0.85rem;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 0.95rem;
+      display: none;
+      word-break: break-word;
+    }
+    .alert.show { display: block; }
+    .alert-error { background: #fdecea; color: #c62828; border: 1px solid #f5c6cb; }
+    .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+    .alert-info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+
+    /* Dashboard */
+    #dashboard {
+      display: none;
+      padding-bottom: 40px;
+    }
+
+    header.app-header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-inner h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+    }
+
+    .user-info span {
+      opacity: 0.9;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 20px 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .panel {
+      display: none;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel.active { display: block; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .panel-header h2 {
+      font-size: 1.2rem;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      min-width: 600px;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: #f5f0e8;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    tr:hover td { background: #faf7f2; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-active { background: #e8f5e9; color: #2e7d32; }
+    .badge-inactive { background: #fdecea; color: #c62828; }
+
+    .actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      table { font-size: 0.85rem; }
+      th, td { padding: 10px 8px; }
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 16px;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal h3 {
+      margin-bottom: 18px;
+      font-size: 1.15rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--muted);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+    }
+
+    .price {
+      font-weight: 700;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .thumb {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #eee3d5;
+    }
+
+    .thumb-placeholder {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: #eee3d5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .debug-box {
+      margin-top: 16px;
+      padding: 10px 12px;
+      background: #fff8e1;
+      border: 1px solid #ffe0b2;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #6d4c41;
+      direction: ltr;
+      text-align: left;
+      word-break: break-all;
+      display: none;
+    }
+    .debug-box.show { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- ========== LOGIN ========== -->
+  <section id="login-section">
+    <div class="login-card">
+      <h1>کیف مارکت</h1>
+      <p class="subtitle">ورود به پنل مدیریت</p>
+
+      <div id="login-alert" class="alert alert-error"></div>
+      <div id="login-debug" class="debug-box"></div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">ایمیل</label>
+          <input type="email" id="email" required autocomplete="username" placeholder="admin@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="password">رمز عبور</label>
+          <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">ورود</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ========== DASHBOARD ========== -->
+  <div id="dashboard">
+    <header class="app-header">
+      <div class="container header-inner">
+        <h1>پنل مدیریت · کیف مارکت</h1>
+        <div class="user-info">
+          <span id="admin-name">—</span>
+          <span id="admin-role" class="badge badge-active">—</span>
+          <button class="btn btn-outline btn-sm" id="logout-btn" style="color:#fff;border-color:rgba(255,255,255,0.4)">خروج</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="container">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="products">محصولات</button>
+        <button class="tab-btn" data-tab="categories">دسته‌بندی‌ها</button>
+      </div>
+
+      <!-- Products Panel -->
+      <div id="panel-products" class="panel active">
+        <div class="panel-header">
+          <h2>مدیریت محصولات</h2>
+          <button class="btn btn-success btn-sm" id="btn-add-product">+ افزودن محصول</button>
+        </div>
+        <div id="products-alert" class="alert"></div>
+        <div id="products-loading" class="loading">در حال بارگذاری...</div>
+        <div class="table-wrap">
+          <table id="products-table" style="display:none">
+            <thead>
+              <tr>
+                <th>تصویر</th>
+                <th>نام</th>
+                <th>دسته</th>
+                <th>قیمت</th>
+                <th>موجودی</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+        <div id="products-empty" class="empty-state" style="display:none">هیچ محصولی ثبت نشده است.</div>
+      </div>
+
+      <!-- Categories Panel -->
+      <div id="panel-categories" class="panel">
+        <div class="panel-header">
+          <h2>مدیریت دسته‌بندی‌ها</h2>
+          <button class="btn btn-success btn-sm" id="btn-add-category">+ افزودن دسته</button>
+        </div>
+        <div id="categories-alert" class="alert"></div>
+        <div id="categories-loading" class="loading">در حال بارگذاری...</div>
+        <div class="table-wrap">
+          <table id="categories-table" style="display:none">
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>وضعیت</th>
+                <th>تاریخ ایجاد</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="categories-body"></tbody>
+          </table>
+        </div>
+        <div id="categories-empty" class="empty-state" style="display:none">هیچ دسته‌بندی‌ای ثبت نشده است.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal">
+      <h3 id="product-modal-title">افزودن محصول</h3>
+      <div id="product-modal-alert" class="alert alert-error"></div>
+      <form id="product-form">
+        <input type="hidden" id="product-id" />
+        <div class="form-group">
+          <label for="product-name">نام محصول *</label>
+          <input type="text" id="product-name" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="product-category">دسته‌بندی *</label>
+          <select id="product-category" required></select>
+        </div>
+        <div class="form-group">
+          <label for="product-description">توضیحات</label>
+          <textarea id="product-description" maxlength="2000"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-price">قیمت (تومان) *</label>
+            <input type="number" id="product-price" required min="0" step="1000" />
+          </div>
+          <div class="form-group">
+            <label for="product-stock">موجودی *</label>
+            <input type="number" id="product-stock" required min="0" step="1" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="product-image">آدرس تصویر (URL)</label>
+          <input type="url" id="product-image" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label for="product-active">وضعیت</label>
+          <select id="product-active">
+            <option value="true">فعال</option>
+            <option value="false">غیرفعال</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="product-cancel">انصراف</button>
+          <button type="submit" class="btn btn-primary" id="product-submit">ذخیره</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Modal -->
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal">
+      <h3 id="category-modal-title">افزودن دسته‌بندی</h3>
+      <div id="category-modal-alert" class="alert alert-error"></div>
+      <form id="category-form">
+        <input type="hidden" id="category-id" />
+        <div class="form-group">
+          <label for="category-name">نام دسته‌بندی *</label>
+          <input type="text" id="category-name" required maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label for="category-active">وضعیت</label>
+          <select id="category-active">
+            <option value="true">فعال</option>
+            <option value="false">غیرفعال</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="category-cancel">انصراف</button>
+          <button type="submit" class="btn btn-primary" id="category-submit">ذخیره</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ========== Supabase Config ==========
+    const SUPABASE_URL = "https://vtderzmdfobjrgbzrwmm.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    // Allowed roles for product/category management
+    const PRODUCT_ROLES = ["owner", "product_manager"];
+
+    // State
+    let currentAdmin = null;
+    let categoriesCache = [];
+    let productsCache = [];
+
+    // ========== Helpers ==========
+    const faNum = (n) => Number(n || 0).toLocaleString("fa-IR");
+
+    function showAlert(el, message, type = "error") {
+      if (!el) return;
+      el.textContent = message;
+      el.className = `alert alert-${type} show`;
+      if (type === "success") {
+        setTimeout(() => el.classList.remove("show"), 4000);
+      }
+    }
+
+    function hideAlert(el) {
+      if (el) el.classList.remove("show");
+    }
+
+    function showDebug(message) {
+      const box = document.getElementById("login-debug");
+      if (!box) return;
+      box.textContent = message;
+      box.classList.add("show");
+    }
+
+    function hideDebug() {
+      const box = document.getElementById("login-debug");
+      if (!box) return;
+      box.textContent = "";
+      box.classList.remove("show");
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "—";
+      try {
+        return new Date(iso).toLocaleDateString("fa-IR");
+      } catch {
+        return "—";
+      }
+    }
+
+    // ========== Auth ==========
+    async function checkSession() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session) {
+        showLogin();
+        return;
+      }
+      await loadAdminProfile(session.user);
+    }
+
+    async function loadAdminProfile(user) {
+      const alertEl = document.getElementById("login-alert");
+      const debugEl = document.getElementById("login-debug");
+      hideAlert(alertEl);
+      hideDebug();
+
+      // 1) Try to fetch the profile by user id
+      const { data, error, status, statusText } = await supabase
+        .from("admin_profiles")
+        .select("id, full_name, role, is_active, created_at")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        // Show real error details for debugging
+        const realMsg = `[${status} ${statusText}] ${error.message || "Unknown error"}` +
+          (error.details ? ` | details: ${error.details}` : "") +
+          (error.hint ? ` | hint: ${error.hint}` : "") +
+          (error.code ? ` | code: ${error.code}` : "");
+        showDebug(`UID: ${user.id}\nEmail: ${user.email || "—"}\nError: ${realMsg}`);
+        showAlert(alertEl, "خطا در دریافت پروفایل مدیر: " + (error.message || "نامشخص"), "error");
+        await supabase.auth.signOut();
+        showLogin();
+        return;
+      }
+
+      if (!data) {
+        // No profile row for this user
+        showDebug(`UID: ${user.id}\nEmail: ${user.email || "—"}\nNo row found in admin_profiles for this UID.`);
+        await supabase.auth.signOut();
+        showLogin();
+        showAlert(alertEl, "پروفایل مدیریتی برای این حساب یافت نشد. با مدیر اصلی تماس بگیرید.", "error");
+        return;
+      }
+
+      if (!data.is_active) {
+        showDebug(`UID: ${user.id}\nEmail: ${user.email || "—"}\nProfile found but is_active = false.`);
+        await supabase.auth.signOut();
+        showLogin();
+        showAlert(alertEl, "حساب شما غیرفعال شده است. با مدیر اصلی تماس بگیرید.", "error");
+        return;
+      }
+
+      if (!PRODUCT_ROLES.includes(data.role)) {
+        showDebug(`UID: ${user.id}\nEmail: ${user.email || "—"}\nProfile found but role '${data.role}' is not allowed.`);
+        await supabase.auth.signOut();
+        showLogin();
+        showAlert(alertEl, `نقش شما (${data.role || "نامشخص"}) اجازه دسترسی به این پنل را ندارد.`, "error");
+        return;
+      }
+
+      currentAdmin = { ...data, email: user.email };
+      showDashboard();
+    }
+
+    function showLogin() {
+      document.getElementById("login-section").style.display = "flex";
+      document.getElementById("dashboard").style.display = "none";
+      currentAdmin = null;
+    }
+
+    function showDashboard() {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      document.getElementById("admin-name").textContent = currentAdmin.full_name || currentAdmin.email || "مدیر";
+      document.getElementById("admin-role").textContent = roleLabel(currentAdmin.role);
+      loadCategories();
+      loadProducts();
+    }
+
+    function roleLabel(role) {
+      const map = {
+        owner: "مالک",
+        product_manager: "مدیر محصول",
+        order_manager: "مدیر سفارش",
+        staff: "کارمند"
+      };
+      return map[role] || role || "—";
+    }
+
+    // Login form
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("login-btn");
+      const alertEl = document.getElementById("login-alert");
+
+      hideAlert(alertEl);
+      hideDebug();
+      btn.disabled = true;
+      btn.textContent = "در حال ورود...";
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          let msg = "خطا در ورود: " + (error.message || "نامشخص");
+          if (error.message && error.message.includes("Invalid login credentials")) {
+            msg = "ایمیل یا رمز عبور اشتباه است.";
+          } else if (error.message && error.message.includes("Email not confirmed")) {
+            msg = "ایمیل شما هنوز تأیید نشده است.";
+          }
+          showAlert(alertEl, msg, "error");
+          return;
+        }
+        await loadAdminProfile(data.user);
+      } catch (err) {
+        showAlert(alertEl, "خطای شبکه: " + (err && err.message ? err.message : "اتصال اینترنت را بررسی کنید."), "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "ورود";
+      }
+    });
+
+    // Logout
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await supabase.auth.signOut();
+      showLogin();
+    });
+
+    // ========== Tabs ==========
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    // ========== Categories ==========
+    async function loadCategories() {
+      const loading = document.getElementById("categories-loading");
+      const table = document.getElementById("categories-table");
+      const empty = document.getElementById("categories-empty");
+      const body = document.getElementById("categories-body");
+
+      loading.style.display = "block";
+      table.style.display = "none";
+      empty.style.display = "none";
+      hideAlert(document.getElementById("categories-alert"));
+
+      const { data, error } = await supabase
+        .from("categories")
+        .select("id, name, is_active, created_at")
+        .order("created_at", { ascending: false });
+
+      loading.style.display = "none";
+
+      if (error) {
+        showAlert(document.getElementById("categories-alert"), "خطا در دریافت دسته‌بندی‌ها: " + (error.message || "نامشخص"), "error");
+        return;
+      }
+
+      categoriesCache = data || [];
+      populateCategorySelect();
+
+      if (!categoriesCache.length) {
+        empty.style.display = "block";
+        return;
+      }
+
+      body.innerHTML = categoriesCache.map((c) => `
+        <tr>
+          <td>${escapeHtml(c.name)}</td>
+          <td><span class="badge ${c.is_active ? "badge-active" : "badge-inactive"}">${c.is_active ? "فعال" : "غیرفعال"}</span></td>
+          <td>${formatDate(c.created_at)}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-outline btn-sm" onclick="editCategory('${c.id}')">ویرایش</button>
+              <button class="btn btn-warning btn-sm" onclick="toggleCategory('${c.id}', ${!c.is_active})">${c.is_active ? "غیرفعال" : "فعال"}</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      table.style.display = "table";
+    }
+
+    function populateCategorySelect() {
+      const sel = document.getElementById("product-category");
+      const active = categoriesCache.filter((c) => c.is_active);
+      sel.innerHTML = active.length
+        ? active.map((c) => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("")
+        : `<option value="">دسته‌ای موجود نیست</option>`;
+    }
+
+    function openCategoryModal(edit = null) {
+      hideAlert(document.getElementById("category-modal-alert"));
+      document.getElementById("category-form").reset();
+      document.getElementById("category-id").value = "";
+      document.getElementById("category-modal-title").textContent = edit ? "ویرایش دسته‌بندی" : "افزودن دسته‌بندی";
+
+      if (edit) {
+        document.getElementById("category-id").value = edit.id;
+        document.getElementById("category-name").value = edit.name;
+        document.getElementById("category-active").value = String(edit.is_active);
+      }
+
+      document.getElementById("category-modal").classList.add("show");
+    }
+
+    document.getElementById("btn-add-category").addEventListener("click", () => openCategoryModal());
+    document.getElementById("category-cancel").addEventListener("click", () => {
+      document.getElementById("category-modal").classList.remove("show");
+    });
+
+    window.editCategory = (id) => {
+      const cat = categoriesCache.find((c) => c.id === id);
+      if (cat) openCategoryModal(cat);
+    };
+
+    window.toggleCategory = async (id, newStatus) => {
+      const { error } = await supabase
+        .from("categories")
+        .update({ is_active: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("categories-alert"), "خطا در تغییر وضعیت: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("categories-alert"), "وضعیت دسته‌بندی به‌روز شد.", "success");
+      loadCategories();
+    };
+
+    document.getElementById("category-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("category-id").value;
+      const name = document.getElementById("category-name").value.trim();
+      const is_active = document.getElementById("category-active").value === "true";
+      const btn = document.getElementById("category-submit");
+      const alertEl = document.getElementById("category-modal-alert");
+
+      if (!name) {
+        showAlert(alertEl, "نام دسته‌بندی الزامی است.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "در حال ذخیره...";
+
+      let error;
+      if (id) {
+        ({ error } = await supabase.from("categories").update({ name, is_active }).eq("id", id));
+      } else {
+        ({ error } = await supabase.from("categories").insert({ name, is_active }));
+      }
+
+      btn.disabled = false;
+      btn.textContent = "ذخیره";
+
+      if (error) {
+        showAlert(alertEl, "خطا: " + (error.message || "عملیات ناموفق بود"), "error");
+        return;
+      }
+
+      document.getElementById("category-modal").classList.remove("show");
+      showAlert(document.getElementById("categories-alert"), id ? "دسته‌بندی ویرایش شد." : "دسته‌بندی اضافه شد.", "success");
+      loadCategories();
+    });
+
+    // ========== Products ==========
+    async function loadProducts() {
+      const loading = document.getElementById("products-loading");
+      const table = document.getElementById("products-table");
+      const empty = document.getElementById("products-empty");
+      const body = document.getElementById("products-body");
+
+      loading.style.display = "block";
+      table.style.display = "none";
+      empty.style.display = "none";
+      hideAlert(document.getElementById("products-alert"));
+
+      const { data, error } = await supabase
+        .from("products")
+        .select(`
+          id, name, description, price, stock, image_url, is_active, created_at, category_id,
+          categories ( id, name )
+        `)
+        .order("created_at", { ascending: false });
+
+      loading.style.display = "none";
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در دریافت محصولات: " + (error.message || "نامشخص"), "error");
+        return;
+      }
+
+      productsCache = data || [];
+
+      if (!productsCache.length) {
+        empty.style.display = "block";
+        return;
+      }
+
+      body.innerHTML = productsCache.map((p) => {
+        const catName = p.categories?.name || "—";
+        const img = p.image_url
+          ? `<img src="${escapeAttr(p.image_url)}" alt="" class="thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="thumb-placeholder" style="display:none">👜</div>`
+          : `<div class="thumb-placeholder">👜</div>`;
+
+        return `
+          <tr>
+            <td>${img}</td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${escapeHtml(catName)}</td>
+            <td class="price">${faNum(p.price)} ت</td>
+            <td>${faNum(p.stock)}</td>
+            <td><span class="badge ${p.is_active ? "badge-active" : "badge-inactive"}">${p.is_active ? "فعال" : "غیرفعال"}</span></td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-outline btn-sm" onclick="editProduct('${p.id}')">ویرایش</button>
+                <button class="btn btn-warning btn-sm" onclick="toggleProduct('${p.id}', ${!p.is_active})">${p.is_active ? "غیرفعال" : "فعال"}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">حذف</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      table.style.display = "table";
+    }
+
+    function openProductModal(edit = null) {
+      hideAlert(document.getElementById("product-modal-alert"));
+      document.getElementById("product-form").reset();
+      document.getElementById("product-id").value = "";
+      document.getElementById("product-modal-title").textContent = edit ? "ویرایش محصول" : "افزودن محصول";
+      populateCategorySelect();
+
+      if (edit) {
+        document.getElementById("product-id").value = edit.id;
+        document.getElementById("product-name").value = edit.name || "";
+        document.getElementById("product-category").value = edit.category_id || "";
+        document.getElementById("product-description").value = edit.description || "";
+        document.getElementById("product-price").value = edit.price ?? "";
+        document.getElementById("product-stock").value = edit.stock ?? "";
+        document.getElementById("product-image").value = edit.image_url || "";
+        document.getElementById("product-active").value = String(edit.is_active);
+      }
+
+      document.getElementById("product-modal").classList.add("show");
+    }
+
+    document.getElementById("btn-add-product").addEventListener("click", () => {
+      if (!categoriesCache.filter((c) => c.is_active).length) {
+        showAlert(document.getElementById("products-alert"), "ابتدا حداقل یک دسته‌بندی فعال بسازید.", "error");
+        return;
+      }
+      openProductModal();
+    });
+
+    document.getElementById("product-cancel").addEventListener("click", () => {
+      document.getElementById("product-modal").classList.remove("show");
+    });
+
+    window.editProduct = (id) => {
+      const p = productsCache.find((x) => x.id === id);
+      if (p) openProductModal(p);
+    };
+
+    window.toggleProduct = async (id, newStatus) => {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در تغییر وضعیت: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("products-alert"), "وضعیت محصول به‌روز شد.", "success");
+      loadProducts();
+    };
+
+    window.deleteProduct = async (id) => {
+      if (!confirm("آیا از حذف این محصول مطمئن هستید؟ این عمل قابل بازگشت نیست.")) return;
+
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در حذف: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("products-alert"), "محصول حذف شد.", "success");
+      loadProducts();
+    };
+
+    document.getElementById("product-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("product-id").value;
+      const payload = {
+        name: document.getElementById("product-name").value.trim(),
+        category_id: document.getElementById("product-category").value,
+        description: document.getElementById("product-description").value.trim() || null,
+        price: Number(document.getElementById("product-price").value),
+        stock: Number(document.getElementById("product-stock").value),
+        image_url: document.getElementById("product-image").value.trim() || null,
+        is_active: document.getElementById("product-active").value === "true"
+      };
+
+      const btn = document.getElementById("product-submit");
+      const alertEl = document.getElementById("product-modal-alert");
+
+      if (!payload.name || !payload.category_id) {
+        showAlert(alertEl, "نام و دسته‌بندی الزامی است.", "error");
+        return;
+      }
+      if (isNaN(payload.price) || payload.price < 0) {
+        showAlert(alertEl, "قیمت معتبر وارد کنید.", "error");
+        return;
+      }
+      if (isNaN(payload.stock) || payload.stock < 0) {
+        showAlert(alertEl, "موجودی معتبر وارد کنید.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "در حال ذخیره...";
+
+      let error;
+      if (id) {
+        ({ error } = await supabase.from("products").update(payload).eq("id", id));
+      } else {
+        ({ error } = await supabase.from("products").insert(payload));
+      }
+
+      btn.disabled = false;
+      btn.textContent = "ذخیره";
+
+      if (error) {
+        showAlert(alertEl, "خطا: " + (error.message || "عملیات ناموفق بود"), "error");
+        return;
+      }
+
+      document.getElementById("product-modal").classList.remove("show");
+      showAlert(document.getElementById("products-alert"), id ? "محصول ویرایش شد." : "محصول اضافه شد.", "success");
+      loadProducts();
+    });
+
+    // ========== Utils ==========
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/`/g, "&#096;");
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.classList.remove("show");
+      });
+    });
+
+    // ========== Init ==========
+    checkSession();
+
+    // Listen for auth changes
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        showLogin();
+      }
+    });
+  </script>
+</body>
+</html>

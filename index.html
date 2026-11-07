@@ -1,93 +1,110 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>کیف مارکت | فروشگاه کیف زنانه</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#f8f3eb;color:#493629;font-family:Tahoma,Arial,sans-serif}
-header{background:#493629;color:white;text-align:center;padding:28px 12px}
-header h1{margin:0 0 10px;font-size:30px}
-nav{background:#72553e;padding:14px;text-align:center}
-nav a{color:white;text-decoration:none;margin:0 12px}
-.hero{text-align:center;padding:35px 15px;background:#eadcc9}
-.hero h2{font-size:25px}
-.container{max-width:1000px;margin:25px auto;padding:12px}
-.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
-.card{background:white;border-radius:12px;padding:14px;text-align:center;box-shadow:0 3px 12px #0001}
-.photo{height:150px;background:#eee3d5;border-radius:9px;display:grid;place-items:center;font-size:65px}
-.price{color:#92653c;font-weight:bold}
-button{background:#654832;color:white;border:0;border-radius:7px;padding:11px 18px;cursor:pointer}
-button:hover{background:#8b6849}
-#cart{background:white;padding:18px;border-radius:12px;margin-top:30px}
-footer{text-align:center;background:#493629;color:white;padding:22px;margin-top:35px}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe5">
+  <meta name="description" content="کیف مارکت؛ انتخابی شیک برای هر روز و هر سلیقه">
+  <title>کیف مارکت | فروشگاه کیف زنانه</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+    :root{--bg:#f7f2e9;--paper:#fffdf9;--ink:#30251e;--muted:#8c7d70;--line:#e9dfd2;--brown:#79543c;--brown2:#a77a58;--sand:#eadcc9;--green:#64745a;--shadow:0 18px 45px #4b352012}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Vazirmatn',Tahoma,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}.topline{background:#4a3629;color:#f8eee2;text-align:center;padding:8px 12px;font-size:12px}.wrap{width:min(1160px,calc(100% - 36px));margin:auto}.nav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 0;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}.brandmark{width:44px;height:44px;border-radius:15px;background:var(--brown);display:grid;place-items:center;color:#fff;font-size:24px}.brand strong{font-size:21px;letter-spacing:-.5px}.brand small{display:block;color:var(--muted);font-size:10px;margin-top:-3px}.navlinks{display:flex;gap:24px;color:#6e5a4b;font-size:13px}.navlinks a{color:inherit;text-decoration:none}.actions{display:flex;gap:9px}.iconbtn,.adminbtn{border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:13px;padding:10px 14px}.cartcount{background:var(--brown);color:white;border-radius:20px;padding:1px 7px;font-size:11px;margin-right:4px}.hero{margin:28px 0 46px;display:grid;grid-template-columns:1.08fr .92fr;gap:24px;align-items:stretch}.hero-copy{background:#eee3d4;border-radius:28px;padding:clamp(26px,5vw,58px);display:flex;flex-direction:column;justify-content:center;min-height:350px;position:relative;overflow:hidden}.eyebrow{font-size:12px;color:var(--brown);font-weight:700;letter-spacing:.4px}.hero h1{font-size:clamp(30px,4vw,48px);line-height:1.5;margin:14px 0 12px;max-width:530px}.hero p{color:#756456;line-height:2;font-size:14px;max-width:480px;margin:0 0 24px}.primary{border:0;background:var(--brown);color:#fff;border-radius:13px;padding:13px 22px;font-weight:700;align-self:flex-start;box-shadow:0 8px 20px #79543c26}.hero-art{min-height:350px;border-radius:28px;background:linear-gradient(145deg,#d9c3aa,#b18a69);position:relative;overflow:hidden;display:grid;place-items:center}.hero-art:before,.hero-art:after{content:"";position:absolute;border:1px solid #fff6;border-radius:50%;width:330px;height:330px}.hero-art:after{width:440px;height:440px}.hero-bag{position:relative;z-index:1;width:220px;height:190px;background:linear-gradient(135deg,#8b5e42,#563a2b);border-radius:24px 24px 48px 48px;box-shadow:0 30px 35px #4d342c55;transform:rotate(-7deg)}.hero-bag:before{content:"";position:absolute;width:104px;height:78px;border:12px solid #68452f;border-bottom:0;border-radius:70px 70px 0 0;top:-62px;left:58px}.hero-bag:after{content:"✦";position:absolute;left:94px;top:65px;color:#d7b98e;font-size:28px}.hero-tag{position:absolute;z-index:2;bottom:25px;right:25px;background:#fffdf0dd;border-radius:14px;padding:10px 15px;font-size:12px;color:#5d4939}.sectionhead{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:20px}.sectionhead h2{font-size:24px;margin:0}.sectionhead p{color:var(--muted);font-size:12px;margin:6px 0 0}.categories{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:42px}.cat{border:1px solid var(--line);background:var(--paper);padding:17px;border-radius:17px;display:flex;align-items:center;gap:13px;text-align:right;color:var(--ink)}.cat .emoji{width:46px;height:46px;background:#f0e6d9;border-radius:14px;display:grid;place-items:center;font-size:24px}.cat b{font-size:14px}.cat small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.cat.active{border-color:var(--brown2);background:#f3e9dc}.toolbar{display:flex;justify-content:space-between;gap:12px;margin:20px 0}.search{flex:1;max-width:360px;border:1px solid var(--line);background:var(--paper);border-radius:13px;padding:12px 15px;outline:none}.sort{border:1px solid var(--line);background:var(--paper);border-radius:13px;padding:10px 13px;color:#6d5a4c}.products{display:grid;grid-template-columns:repeat(4,1fr);gap:17px}.product{background:var(--paper);border:1px solid var(--line);border-radius:19px;overflow:hidden;transition:.2s;box-shadow:0 4px 18px #4b352008}.product:hover{transform:translateY(-4px);box-shadow:var(--shadow)}.productvisual{height:205px;display:grid;place-items:center;position:relative;background:linear-gradient(145deg,#eee3d4,#d8c1a8)}.productvisual .bagshape{width:115px;height:105px;border-radius:15px 15px 27px 27px;position:relative;box-shadow:0 17px 20px #513b2c30}.bagshape:before{content:"";position:absolute;width:50px;height:38px;border:7px solid currentColor;border-bottom:0;border-radius:35px 35px 0 0;top:-29px;left:25px;opacity:.8}.bagshape:after{content:"✦";position:absolute;left:48px;top:38px;color:#e8d1a9;font-size:17px}.tone1{background:linear-gradient(135deg,#9a6c4d,#65432f);color:#65432f}.tone2{background:linear-gradient(135deg,#c6a77f,#8d6a4d);color:#8d6a4d}.tone3{background:linear-gradient(135deg,#56504a,#282522);color:#282522}.tone4{background:linear-gradient(135deg,#a96f72,#714447);color:#714447}.tone5{background:linear-gradient(135deg,#d0b995,#987e5c);color:#987e5c}.tone6{background:linear-gradient(135deg,#777c6b,#42483d);color:#42483d}.tone7{background:linear-gradient(135deg,#d1b6a0,#98745e);color:#98745e}.tone8{background:linear-gradient(135deg,#b7a6a0,#75615e);color:#75615e}.tag{position:absolute;top:12px;right:12px;background:#fffdf0e8;color:#71543f;border-radius:20px;padding:5px 9px;font-size:10px}.productbody{padding:14px}.productbody h3{font-size:14px;margin:0 0 6px}.productbody p{font-size:11px;color:var(--muted);margin:0 0 13px}.price-row{display:flex;align-items:center;justify-content:space-between;gap:8px}.price{font-size:14px;font-weight:800;color:var(--brown)}.add{border:0;background:#efe4d7;color:#654630;border-radius:10px;padding:8px 11px;font-size:11px;font-weight:700}.empty{grid-column:1/-1;text-align:center;padding:35px;color:var(--muted)}.about{margin:55px 0;background:#e9ddcf;border-radius:24px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:20px}.about h2{margin:0 0 8px;font-size:21px}.about p{margin:0;color:#756456;font-size:13px;line-height:2}.aboutbox{background:#f8f3ec;border-radius:16px;padding:18px;display:flex;gap:12px;align-items:center}.aboutbox span{font-size:27px}.aboutbox b{font-size:13px}.aboutbox small{display:block;color:var(--muted);font-size:11px}.footer{border-top:1px solid var(--line);padding:25px 0 35px;color:var(--muted);font-size:11px;display:flex;justify-content:space-between;gap:12px}.overlay{position:fixed;inset:0;background:#20181166;z-index:10;display:none;justify-content:flex-end}.overlay.show{display:flex}.drawer{background:var(--paper);height:100%;width:min(440px,100%);padding:23px;overflow:auto;box-shadow:-15px 0 40px #20181120}.drawerhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}.drawerhead h2{font-size:20px;margin:0}.close{border:0;background:#f0e7dc;border-radius:10px;padding:8px 12px}.cartitem{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);font-size:13px}.qty{display:flex;align-items:center;gap:8px}.qty button{border:1px solid var(--line);background:#fff;border-radius:7px;width:25px;height:25px}.total{display:flex;justify-content:space-between;font-weight:800;margin:22px 0}.checkout{width:100%;border:0;border-radius:12px;background:var(--brown);color:#fff;padding:13px;font-weight:700}.note{font-size:11px;line-height:1.9;color:var(--muted);margin-top:12px}.adminform{display:grid;gap:10px}.adminform input,.adminform select{border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;width:100%}.adminform button{border:0;border-radius:10px;padding:11px;background:var(--brown);color:#fff}.adminlist{margin-top:20px}.adminrow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:12px}.adminrow button{border:0;background:#f3e5dc;color:#8c4c36;border-radius:8px;padding:6px 9px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#3f332b;color:#fff;padding:11px 17px;border-radius:12px;font-size:12px;z-index:20;display:none}.toast.show{display:block}
+    @media(max-width:850px){.hero{grid-template-columns:1fr}.hero-art{min-height:270px}.products{grid-template-columns:repeat(2,1fr)}.navlinks{display:none}.about{grid-template-columns:1fr}}
+    @media(max-width:480px){.wrap{width:calc(100% - 24px)}.nav{padding:14px 0}.brand strong{font-size:18px}.adminbtn{font-size:11px;padding:9px}.hero{margin:18px 0 32px}.hero-copy{min-height:290px}.hero-art{min-height:240px}.categories{gap:8px}.cat{padding:11px 8px;gap:8px}.cat .emoji{width:37px;height:37px;font-size:20px}.cat b{font-size:11px}.cat small{font-size:9px}.products{gap:10px}.productvisual{height:155px}.productbody{padding:11px}.productbody h3{font-size:12px}.price{font-size:12px}.add{padding:7px 8px}.footer{flex-direction:column}}
+  </style>
 </head>
 <body>
-<header>
-<h1>کیف مارکت</h1>
-<p>انتخابی شیک برای هر روز شما</p>
-</header>
-<nav>
-<a href="#home">خانه</a>
-<a href="#products">محصولات</a>
-<a href="#cart">سبد خرید</a>
-</nav>
-<section class="hero" id="home">
-<h2>به کیف مارکت خوش آمدید</h2>
-<p>مجموعه‌ای از کیف‌های زنانه روزمره، اسپرت و مجلسی</p>
-</section>
-<main class="container">
-<h2 id="products">محصولات فروشگاه</h2>
-<div class="products" id="productList"></div>
-<section id="cart">
-<h2>سبد خرید شما</h2>
-<div id="cartItems">سبد خرید خالی است.</div>
-<h3 id="total">مجموع: ۰ تومان</h3>
-<button onclick="order()">ثبت درخواست سفارش</button>
-</section>
-</main>
-<footer>
-<p>کیف مارکت | فروشگاه کیف زنانه</p>
-<p>برای ثبت سفارش با فروشگاه تماس بگیرید.</p>
-</footer>
+  <div class="topline">کیف موردعلاقه‌ات، برای لحظه‌های خاص و روزهای معمولی</div>
+  <header class="wrap nav">
+    <a class="brand" href="#home"><span class="brandmark">کی</span><span><strong>کیف مارکت</strong><small>انتخابی برای هر روز</small></span></a>
+    <nav class="navlinks"><a href="#home">خانه</a><a href="#products">محصولات</a><a href="#about">درباره ما</a></nav>
+    <div class="actions"><a class="adminbtn" href="admin.html" style="text-decoration:none">ورود مدیر</a><button class="iconbtn" id="cartOpen">سبد خرید <span class="cartcount" id="cartCount">۰</span></button></div>
+  </header>
+  <main class="wrap" id="home">
+    <section class="hero">
+      <div class="hero-copy"><span class="eyebrow">کیف مارکت · مجموعه زنانه</span><h1>سادگیِ شیک،<br>همراهِ هر روز تو</h1><p>از کیف‌های روزمره تا مدل‌های مجلسی؛ انتخابی که استایل تو را کامل می‌کند. مجموعه کیف‌های زنانه را در کیف مارکت ببین.</p><button class="primary" onclick="document.querySelector('#products').scrollIntoView({behavior:'smooth'})">دیدن محصولات</button></div>
+      <div class="hero-art"><div class="hero-bag"></div><div class="hero-tag">جزئیات کوچک، تفاوت بزرگ</div></div>
+    </section>
+    <section>
+      <div class="sectionhead"><div><h2>دسته‌بندی‌ها</h2><p>برای هر موقعیت، یک انتخاب مناسب</p></div></div>
+      <div class="categories" id="categoryList"><button class="cat active" data-category="همه"><span class="emoji">👜</span><span><b>همه کیف‌ها</b><small>مشاهده مجموعه</small></span></button></div>
+    </section>
+    <section id="products">
+      <div class="sectionhead"><div><h2>محصولات منتخب</h2><p>مدل‌ها و رنگ‌های پیشنهادی کیف مارکت</p></div></div>
+      <div class="toolbar"><input class="search" id="search" placeholder="جست‌وجوی نام کیف..."><select class="sort" id="sort"><option value="default">مرتب‌سازی پیش‌فرض</option><option value="low">ارزان‌ترین</option><option value="high">گران‌ترین</option></select></div>
+      <p id="loadMessage" class="note" role="status">در حال دریافت محصولات فروشگاه...</p><div class="products" id="productsGrid"></div>
+    </section>
+    <section class="about" id="about"><div><h2>درباره کیف مارکت</h2><p>کیف مارکت با هدف فراهم‌کردن انتخابی ساده و خوش‌سلیقه از کیف‌های زنانه ساخته شده است. این نسخه، پیش‌نمایش اولیه فروشگاه است و اطلاعات محصولات آن نمونه هستند.</p></div><div class="aboutbox"><span>♡</span><div><b>همراه انتخاب تو</b><small>برای پرسش درباره محصولات و سفارش، راه ارتباطی فروشگاه را اضافه خواهیم کرد.</small></div></div></section>
+  </main>
+  <footer class="wrap footer"><span>© کیف مارکت · نسخه آزمایشی فروشگاه</span><span>طراحی‌شده با سلیقه کلاسیک</span></footer>
+  <div class="overlay" id="cartOverlay"><aside class="drawer"><div class="drawerhead"><h2>سبد خرید</h2><button class="close" data-close="cartOverlay">بستن</button></div><div id="cartItems"></div><div class="total"><span>جمع کل</span><span id="cartTotal">۰ تومان</span></div><button class="checkout" id="checkout">ادامه ثبت سفارش</button><p class="note">این نسخه آزمایشی است؛ پرداخت آنلاین و ثبت سفارش واقعی هنوز فعال نیست. پس از تعیین شماره تماس فروشگاه و راهکار پرداخت، این بخش تکمیل می‌شود.</p></aside></div>
+  <div class="overlay" id="adminOverlay"><aside class="drawer"><div class="drawerhead"><h2>مدیریت محصولات</h2><button class="close" data-close="adminOverlay">بستن</button></div><p class="note">در این پیش‌نمایش می‌توانی محصولات را در همین مرورگر اضافه یا حذف کنی. این تغییرات هنوز بین مدیران و دستگاه‌های مختلف همگام نمی‌شوند و پنل امن آنلاین نیست.</p><form class="adminform" id="productForm"><input id="pName" placeholder="نام محصول" required><input id="pPrice" type="number" min="0" placeholder="قیمت به تومان" required><select id="pCategory"><option>روزمره</option><option>مجلسی</option><option>اسپرت</option></select><button type="submit">افزودن محصول</button></form><div class="adminlist" id="adminList"></div><p class="note">برای مدیریت چندنفره و امن، در مرحله بعد باید سایت به پایگاه داده و سیستم ورود مدیران متصل شود.</p></aside></div>
+  <div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const products=[
-{name:"کیف دستی کلاسیک",price:850000,category:"روزمره",icon:"👜"},
-{name:"کیف دوشی اسپرت",price:690000,category:"اسپرت",icon:"🎒"},
-{name:"کیف مجلسی زنانه",price:1200000,category:"مجلسی",icon:"👛"},
-{name:"کیف روزمره",price:750000,category:"روزمره",icon:"👜"},
-{name:"کیف اسپرت کوچک",price:590000,category:"اسپرت",icon:"🎒"},
-{name:"کیف مجلسی شیک",price:1450000,category:"مجلسی",icon:"👝"}
-];
-let cart=[];
-const fa=n=>n.toLocaleString("fa-IR");
-function render(){
-document.getElementById("productList").innerHTML=products.map((p,i)=>`
-<div class="card">
-<div class="photo">${p.icon}</div>
-<h3>${p.name}</h3>
-<p>${p.category}</p>
-<p class="price">${fa(p.price)} تومان</p>
-<button onclick="add(${i})">افزودن به سبد</button>
-</div>`).join("");
-showCart();
+const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const fmt=n=>new Intl.NumberFormat('fa-IR').format(Number(n)||0)+' تومان';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let products=[];
+let categories=[];
+let cart=JSON.parse(localStorage.getItem('km_cart')||'{}');
+let active='همه';
+const grid=document.getElementById('productsGrid');
+const categoryList=document.getElementById('categoryList');
+function saveCart(){localStorage.setItem('km_cart',JSON.stringify(cart));}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1900)}
+function renderCategories(){
+ const icons=['👜','🤎','✨','🎒','👝','🧡'];
+ const all=[{id:'همه',name:'همه کیف‌ها'},...categories];
+ categoryList.innerHTML=all.map((c,i)=>`<button class="cat ${active===String(c.id)?'active':''}" data-category="${esc(c.id)}"><span class="emoji">${icons[i%icons.length]}</span><span><b>${esc(c.name)}</b><small>${i===0?'مشاهده مجموعه':'مشاهده محصولات'}</small></span></button>`).join('');
+ categoryList.querySelectorAll('.cat').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.category;renderCategories();renderProducts()}));
 }
-function add(i){cart.push(i);showCart();}
-function showCart(){
-let el=document.getElementById("cartItems");
-el.innerHTML=cart.length?cart.map((i,j)=>`
-<p>${products[i].name} — ${fa(products[i].price)} تومان
-<button onclick="removeItem(${j})">حذف</button></p>`).join(""):"سبد خرید خالی است.";
-document.getElementById("total").textContent="مجموع: "+fa(cart.reduce((s,i)=>s+products[i].price,0))+" تومان";
+function renderProducts(){
+ const q=document.getElementById('search').value.trim().toLocaleLowerCase('fa');
+ let arr=products.filter(p=>(active==='همه'||String(p.category_id)===active)&&String(p.name||'').toLocaleLowerCase('fa').includes(q));
+ const sort=document.getElementById('sort').value;
+ if(sort==='low')arr.sort((a,b)=>Number(a.price)-Number(b.price));
+ if(sort==='high')arr.sort((a,b)=>Number(b.price)-Number(a.price));
+ grid.innerHTML=arr.length?arr.map(p=>{
+  const category=p.categories?.name||categories.find(c=>String(c.id)===String(p.category_id))?.name||'کیف زنانه';
+  const image=p.image_url?`<img src="${esc(p.image_url)}" alt="${esc(p.name)}" loading="lazy" style="width:100%;height:100%;object-fit:cover">`:`<div class="bagshape tone1"></div>`;
+  return `<article class="product"><div class="productvisual"><span class="tag">${esc(category)}</span>${image}</div><div class="productbody"><h3>${esc(p.name)}</h3><p>${esc(p.description||'انتخابی از کیف مارکت')}</p><div class="price-row"><span class="price">${fmt(p.price)}</span><button class="add" onclick="addToCart(${Number(p.id)})">افزودن +</button></div></div></article>`;
+ }).join(''):'<div class="empty">محصول فعالی برای نمایش پیدا نشد.</div>';
 }
-function removeItem(j){cart.splice(j,1);showCart();}
-function order(){
-if(!cart.length){alert("سبد خرید خالی است");return;}
-alert("این نسخه آزمایشی است و هنوز ثبت سفارش واقعی فعال نشده است.");
+function addToCart(id){const p=products.find(x=>Number(x.id)===Number(id));if(!p)return;cart[id]=(cart[id]||0)+1;saveCart();renderCart();toast('به سبد خرید اضافه شد');}
+function renderCart(){
+ const entries=Object.entries(cart).filter(([id,n])=>n>0&&products.some(p=>Number(p.id)===Number(id)));
+ const count=entries.reduce((a,[id,n])=>a+n,0);
+ document.getElementById('cartCount').textContent=count.toLocaleString('fa-IR');
+ let total=0;
+ document.getElementById('cartItems').innerHTML=entries.length?entries.map(([id,n])=>{const p=products.find(x=>Number(x.id)===Number(id));total+=Number(p.price)*n;return `<div class="cartitem"><div><b>${esc(p.name)}</b><div class="note">${fmt(p.price)}</div></div><div class="qty"><button onclick="changeQty(${Number(id)},-1)">−</button><span>${n.toLocaleString('fa-IR')}</span><button onclick="changeQty(${Number(id)},1)">+</button></div></div>`}).join(''):'<div class="empty">سبد خریدت هنوز خالی است.</div>';
+ document.getElementById('cartTotal').textContent=fmt(total);
 }
-render();
+function changeQty(id,d){cart[id]=(cart[id]||0)+d;if(cart[id]<=0)delete cart[id];saveCart();renderCart();}
+async function loadStore(){
+ const msg=document.getElementById('loadMessage');
+ try{
+  const [catResult,productResult]=await Promise.all([
+   db.from('categories').select('id,name').eq('is_active',true).order('name'),
+   db.from('products').select('id,name,description,price,stock,image_url,is_active,category_id,categories(name)').eq('is_active',true).order('created_at',{ascending:false})
+  ]);
+  if(catResult.error)throw new Error('دریافت دسته‌بندی‌ها: '+catResult.error.message);
+  if(productResult.error)throw new Error('دریافت محصولات: '+productResult.error.message);
+  categories=catResult.data||[];products=productResult.data||[];
+  renderCategories();renderProducts();renderCart();
+  msg.textContent=products.length?'':'هنوز محصول فعالی برای نمایش ثبت نشده است.';
+ }catch(err){msg.textContent='خطا در دریافت اطلاعات فروشگاه: '+err.message;grid.innerHTML='<div class="empty">بارگذاری محصولات انجام نشد. تنظیمات دسترسی خواندن عمومی در Supabase باید بررسی شود.</div>';console.error(err);}
+}
+document.getElementById('search').addEventListener('input',renderProducts);
+document.getElementById('sort').addEventListener('change',renderProducts);
+document.getElementById('cartOpen').onclick=()=>document.getElementById('cartOverlay').classList.add('show');
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>document.getElementById(b.dataset.close).classList.remove('show'));
+document.getElementById('checkout').onclick=()=>toast('ثبت سفارش و پرداخت در نسخه بعد فعال می‌شود');
+loadStore();
 </script>
 </body>
 </html>

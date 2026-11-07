@@ -463,4 +463,494 @@
         </div>
       </form>
     </div>
-  </div>
+  </div><script>
+    const SUPABASE_URL = "https://vtderzmdfobjrgbzrwmm.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI";
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      }
+    });
+
+    const PRODUCT_ROLES = ["owner", "product_manager"];
+    let currentAdmin = null;
+    let categoriesCache = [];
+    let productsCache = [];
+
+    const faNum = (n) => Number(n || 0).toLocaleString("fa-IR");
+
+    function showAlert(el, message, type = "error") {
+      if (!el) return;
+      el.textContent = message;
+      el.className = `alert alert-${type} show`;
+      if (type === "success") {
+        setTimeout(() => el.classList.remove("show"), 4000);
+      }
+    }
+
+    function hideAlert(el) {
+      if (el) el.classList.remove("show");
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "—";
+      try {
+        return new Date(iso).toLocaleDateString("fa-IR");
+      } catch {
+        return "—";
+      }
+    }
+
+    async function checkSession() {
+      const { data: { session }, error } = await sb.auth.getSession();
+      if (error || !session) {
+        showLogin();
+        return;
+      }
+      await loadAdminProfile(session.user);
+    }
+
+    async function loadAdminProfile(user) {
+      const { data, error } = await sb
+        .from("admin_profiles")
+        .select("id, full_name, role, is_active")
+        .eq("id", user.id)
+        .single();
+
+      if (error || !data) {
+        await sb.auth.signOut();
+        showLogin();
+        showAlert(document.getElementById("login-alert"), "حساب مدیریتی یافت نشد یا دسترسی ندارید.", "error");
+        return;
+      }
+
+      if (!data.is_active) {
+        await sb.auth.signOut();
+        showLogin();
+        showAlert(document.getElementById("login-alert"), "حساب شما غیرفعال شده است. با مدیر اصلی تماس بگیرید.", "error");
+        return;
+      }
+
+      if (!PRODUCT_ROLES.includes(data.role)) {
+        await sb.auth.signOut();
+        showLogin();
+        showAlert(document.getElementById("login-alert"), "نقش شما اجازه دسترسی به این پنل را ندارد.", "error");
+        return;
+      }
+
+      currentAdmin = { ...data, email: user.email };
+      showDashboard();
+    }
+
+    function showLogin() {
+      document.getElementById("login-section").style.display = "flex";
+      document.getElementById("dashboard").style.display = "none";
+      currentAdmin = null;
+    }
+
+    function showDashboard() {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      document.getElementById("admin-name").textContent = currentAdmin.full_name || currentAdmin.email || "مدیر";
+      document.getElementById("admin-role").textContent = roleLabel(currentAdmin.role);
+      loadCategories();
+      loadProducts();
+    }
+
+    function roleLabel(role) {
+      const map = {
+        owner: "مالک",
+        product_manager: "مدیر محصول",
+        order_manager: "مدیر سفارش",
+        staff: "کارمند"
+      };
+      return map[role] || role;
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("login-btn");
+      const alertEl = document.getElementById("login-alert");
+
+      hideAlert(alertEl);
+      btn.disabled = true;
+      btn.textContent = "در حال ورود...";
+
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          let msg = "خطا در ورود. دوباره تلاش کنید.";
+          if (error.message.includes("Invalid login credentials")) msg = "ایمیل یا رمز عبور اشتباه است.";
+          else if (error.message.includes("Email not confirmed")) msg = "ایمیل شما هنوز تأیید نشده است.";
+          showAlert(alertEl, msg, "error");
+          return;
+        }
+        await loadAdminProfile(data.user);
+      } catch (err) {
+        showAlert(alertEl, "خطای شبکه. اتصال اینترنت را بررسی کنید.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "ورود";
+      }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      showLogin();
+    });
+
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("panel-" + btn.dataset.tab).classList.add("active");
+      });
+    });
+
+    async function loadCategories() {
+      const loading = document.getElementById("categories-loading");
+      const table = document.getElementById("categories-table");
+      const empty = document.getElementById("categories-empty");
+      const body = document.getElementById("categories-body");
+
+      loading.style.display = "block";
+      table.style.display = "none";
+      empty.style.display = "none";
+
+      const { data, error } = await sb
+        .from("categories")
+        .select("id, name, is_active, created_at")
+        .order("created_at", { ascending: false });
+
+      loading.style.display = "none";
+
+      if (error) {
+        showAlert(document.getElementById("categories-alert"), "خطا در دریافت دسته‌بندی‌ها: " + (error.message || "نامشخص"), "error");
+        return;
+      }
+
+      categoriesCache = data || [];
+      populateCategorySelect();
+
+      if (!categoriesCache.length) {
+        empty.style.display = "block";
+        return;
+      }
+
+      body.innerHTML = categoriesCache.map((c) => `
+        <tr>
+          <td>${escapeHtml(c.name)}</td>
+          <td><span class="badge \( {c.is_active ? "badge-active" : "badge-inactive"}"> \){c.is_active ? "فعال" : "غیرفعال"}</span></td>
+          <td>${formatDate(c.created_at)}</td>
+          <td>
+            <div class="actions">
+              <button class="btn btn-outline btn-sm" onclick="editCategory('${c.id}')">ویرایش</button>
+              <button class="btn btn-warning btn-sm" onclick="toggleCategory('${c.id}', \( {!c.is_active})"> \){c.is_active ? "غیرفعال" : "فعال"}</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      table.style.display = "table";
+    }
+
+    function populateCategorySelect() {
+      const sel = document.getElementById("product-category");
+      const active = categoriesCache.filter((c) => c.is_active);
+      sel.innerHTML = active.length
+        ? active.map((c) => `<option value="\( {c.id}"> \){escapeHtml(c.name)}</option>`).join("")
+        : `<option value="">دسته‌ای موجود نیست</option>`;
+    }
+
+    function openCategoryModal(edit = null) {
+      hideAlert(document.getElementById("category-modal-alert"));
+      document.getElementById("category-form").reset();
+      document.getElementById("category-id").value = "";
+      document.getElementById("category-modal-title").textContent = edit ? "ویرایش دسته‌بندی" : "افزودن دسته‌بندی";
+
+      if (edit) {
+        document.getElementById("category-id").value = edit.id;
+        document.getElementById("category-name").value = edit.name;
+        document.getElementById("category-active").value = String(edit.is_active);
+      }
+
+      document.getElementById("category-modal").classList.add("show");
+    }
+
+    document.getElementById("btn-add-category").addEventListener("click", () => openCategoryModal());
+    document.getElementById("category-cancel").addEventListener("click", () => {
+      document.getElementById("category-modal").classList.remove("show");
+    });
+
+    window.editCategory = (id) => {
+      const cat = categoriesCache.find((c) => c.id === id);
+      if (cat) openCategoryModal(cat);
+    };
+
+    window.toggleCategory = async (id, newStatus) => {
+      const { error } = await sb
+        .from("categories")
+        .update({ is_active: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("categories-alert"), "خطا در تغییر وضعیت: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("categories-alert"), "وضعیت دسته‌بندی به‌روز شد.", "success");
+      loadCategories();
+    };
+
+    document.getElementById("category-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("category-id").value;
+      const name = document.getElementById("category-name").value.trim();
+      const is_active = document.getElementById("category-active").value === "true";
+      const btn = document.getElementById("category-submit");
+      const alertEl = document.getElementById("category-modal-alert");
+
+      if (!name) {
+        showAlert(alertEl, "نام دسته‌بندی الزامی است.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "در حال ذخیره...";
+
+      let error;
+      if (id) {
+        ({ error } = await sb.from("categories").update({ name, is_active }).eq("id", id));
+      } else {
+        ({ error } = await sb.from("categories").insert({ name, is_active }));
+      }
+
+      btn.disabled = false;
+      btn.textContent = "ذخیره";
+
+      if (error) {
+        showAlert(alertEl, "خطا: " + (error.message || "عملیات ناموفق بود"), "error");
+        return;
+      }
+
+      document.getElementById("category-modal").classList.remove("show");
+      showAlert(document.getElementById("categories-alert"), id ? "دسته‌بندی ویرایش شد." : "دسته‌بندی اضافه شد.", "success");
+      loadCategories();
+    });
+
+    async function loadProducts() {
+      const loading = document.getElementById("products-loading");
+      const table = document.getElementById("products-table");
+      const empty = document.getElementById("products-empty");
+      const body = document.getElementById("products-body");
+
+      loading.style.display = "block";
+      table.style.display = "none";
+      empty.style.display = "none";
+
+      const { data, error } = await sb
+        .from("products")
+        .select(`
+          id, name, description, price, stock, image_url, is_active, created_at, category_id,
+          categories ( id, name )
+        `)
+        .order("created_at", { ascending: false });
+
+      loading.style.display = "none";
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در دریافت محصولات: " + (error.message || "نامشخص"), "error");
+        return;
+      }
+
+      productsCache = data || [];
+
+      if (!productsCache.length) {
+        empty.style.display = "block";
+        return;
+      }
+
+      body.innerHTML = productsCache.map((p) => {
+        const catName = p.categories?.name || "—";
+        const img = p.image_url
+          ? `<img src="${escapeAttr(p.image_url)}" alt="" class="thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div class="thumb-placeholder" style="display:none">👜</div>`
+          : `<div class="thumb-placeholder">👜</div>`;
+
+        return `
+          <tr>
+            <td>${img}</td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${escapeHtml(catName)}</td>
+            <td class="price">${faNum(p.price)} ت</td>
+            <td>${faNum(p.stock)}</td>
+            <td><span class="badge \( {p.is_active ? "badge-active" : "badge-inactive"}"> \){p.is_active ? "فعال" : "غیرفعال"}</span></td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-outline btn-sm" onclick="editProduct('${p.id}')">ویرایش</button>
+                <button class="btn btn-warning btn-sm" onclick="toggleProduct('${p.id}', \( {!p.is_active})"> \){p.is_active ? "غیرفعال" : "فعال"}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">حذف</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+      table.style.display = "table";
+    }
+
+    function openProductModal(edit = null) {
+      hideAlert(document.getElementById("product-modal-alert"));
+      document.getElementById("product-form").reset();
+      document.getElementById("product-id").value = "";
+      document.getElementById("product-modal-title").textContent = edit ? "ویرایش محصول" : "افزودن محصول";
+      populateCategorySelect();
+
+      if (edit) {
+        document.getElementById("product-id").value = edit.id;
+        document.getElementById("product-name").value = edit.name || "";
+        document.getElementById("product-category").value = edit.category_id || "";
+        document.getElementById("product-description").value = edit.description || "";
+        document.getElementById("product-price").value = edit.price ?? "";
+        document.getElementById("product-stock").value = edit.stock ?? "";
+        document.getElementById("product-image").value = edit.image_url || "";
+        document.getElementById("product-active").value = String(edit.is_active);
+      }
+
+      document.getElementById("product-modal").classList.add("show");
+    }
+
+    document.getElementById("btn-add-product").addEventListener("click", () => {
+      if (!categoriesCache.filter((c) => c.is_active).length) {
+        showAlert(document.getElementById("products-alert"), "ابتدا حداقل یک دسته‌بندی فعال بسازید.", "error");
+        return;
+      }
+      openProductModal();
+    });
+
+    document.getElementById("product-cancel").addEventListener("click", () => {
+      document.getElementById("product-modal").classList.remove("show");
+    });
+
+    window.editProduct = (id) => {
+      const p = productsCache.find((x) => x.id === id);
+      if (p) openProductModal(p);
+    };
+
+    window.toggleProduct = async (id, newStatus) => {
+      const { error } = await sb
+        .from("products")
+        .update({ is_active: newStatus })
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در تغییر وضعیت: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("products-alert"), "وضعیت محصول به‌روز شد.", "success");
+      loadProducts();
+    };
+
+    window.deleteProduct = async (id) => {
+      if (!confirm("آیا از حذف این محصول مطمئن هستید؟ این عمل قابل بازگشت نیست.")) return;
+
+      const { error } = await sb
+        .from("products")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        showAlert(document.getElementById("products-alert"), "خطا در حذف: " + error.message, "error");
+        return;
+      }
+      showAlert(document.getElementById("products-alert"), "محصول حذف شد.", "success");
+      loadProducts();
+    };
+
+    document.getElementById("product-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("product-id").value;
+      const payload = {
+        name: document.getElementById("product-name").value.trim(),
+        category_id: document.getElementById("product-category").value,
+        description: document.getElementById("product-description").value.trim() || null,
+        price: Number(document.getElementById("product-price").value),
+        stock: Number(document.getElementById("product-stock").value),
+        image_url: document.getElementById("product-image").value.trim() || null,
+        is_active: document.getElementById("product-active").value === "true"
+      };
+
+      const btn = document.getElementById("product-submit");
+      const alertEl = document.getElementById("product-modal-alert");
+
+      if (!payload.name || !payload.category_id) {
+        showAlert(alertEl, "نام و دسته‌بندی الزامی است.", "error");
+        return;
+      }
+      if (isNaN(payload.price) || payload.price < 0) {
+        showAlert(alertEl, "قیمت معتبر وارد کنید.", "error");
+        return;
+      }
+      if (isNaN(payload.stock) || payload.stock < 0) {
+        showAlert(alertEl, "موجودی معتبر وارد کنید.", "error");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "در حال ذخیره...";
+
+      let error;
+      if (id) {
+        ({ error } = await sb.from("products").update(payload).eq("id", id));
+      } else {
+        ({ error } = await sb.from("products").insert(payload));
+      }
+
+      btn.disabled = false;
+      btn.textContent = "ذخیره";
+
+      if (error) {
+        showAlert(alertEl, "خطا: " + (error.message || "عملیات ناموفق بود"), "error");
+        return;
+      }
+
+      document.getElementById("product-modal").classList.remove("show");
+      showAlert(document.getElementById("products-alert"), id ? "محصول ویرایش شد." : "محصول اضافه شد.", "success");
+      loadProducts();
+    });
+
+    function escapeHtml(str) {
+      if (str == null) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttr(str) {
+      return escapeHtml(str).replace(/`/g, "&#096;");
+    }
+
+    document.querySelectorAll(".modal-overlay").forEach((overlay) => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.classList.remove("show");
+      });
+    });
+
+    checkSession();
+
+    sb.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        showLogin();
+      }
+    });
+  </script>
+</body>
+</html>

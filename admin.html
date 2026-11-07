@@ -308,4 +308,159 @@
     }
   </style>
 </head>
-<body>
+<body><section id="login-section">
+    <div class="login-card">
+      <h1>کیف مارکت</h1>
+      <p class="subtitle">ورود به پنل مدیریت</p>
+      <div id="login-alert" class="alert alert-error"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">ایمیل</label>
+          <input type="email" id="email" required autocomplete="username" placeholder="admin@example.com" />
+        </div>
+        <div class="form-group">
+          <label for="password">رمز عبور</label>
+          <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">ورود</button>
+      </form>
+    </div>
+  </section>
+
+  <div id="dashboard">
+    <header class="app-header">
+      <div class="container header-inner">
+        <h1>پنل مدیریت · کیف مارکت</h1>
+        <div class="user-info">
+          <span id="admin-name">—</span>
+          <span id="admin-role" class="badge badge-active">—</span>
+          <button class="btn btn-outline btn-sm" id="logout-btn" style="color:#fff;border-color:rgba(255,255,255,0.4)">خروج</button>
+        </div>
+      </div>
+    </header>
+    <div class="container">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="products">محصولات</button>
+        <button class="tab-btn" data-tab="categories">دسته‌بندی‌ها</button>
+      </div>
+      <div id="panel-products" class="panel active">
+        <div class="panel-header">
+          <h2>مدیریت محصولات</h2>
+          <button class="btn btn-success btn-sm" id="btn-add-product">+ افزودن محصول</button>
+        </div>
+        <div id="products-alert" class="alert"></div>
+        <div id="products-loading" class="loading">در حال بارگذاری...</div>
+        <div class="table-wrap">
+          <table id="products-table" style="display:none">
+            <thead>
+              <tr>
+                <th>تصویر</th>
+                <th>نام</th>
+                <th>دسته</th>
+                <th>قیمت</th>
+                <th>موجودی</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+        <div id="products-empty" class="empty-state" style="display:none">هیچ محصولی ثبت نشده است.</div>
+      </div>
+      <div id="panel-categories" class="panel">
+        <div class="panel-header">
+          <h2>مدیریت دسته‌بندی‌ها</h2>
+          <button class="btn btn-success btn-sm" id="btn-add-category">+ افزودن دسته</button>
+        </div>
+        <div id="categories-alert" class="alert"></div>
+        <div id="categories-loading" class="loading">در حال بارگذاری...</div>
+        <div class="table-wrap">
+          <table id="categories-table" style="display:none">
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>وضعیت</th>
+                <th>تاریخ ایجاد</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="categories-body"></tbody>
+          </table>
+        </div>
+        <div id="categories-empty" class="empty-state" style="display:none">هیچ دسته‌بندی‌ای ثبت نشده است.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal">
+      <h3 id="product-modal-title">افزودن محصول</h3>
+      <div id="product-modal-alert" class="alert alert-error"></div>
+      <form id="product-form">
+        <input type="hidden" id="product-id" />
+        <div class="form-group">
+          <label for="product-name">نام محصول *</label>
+          <input type="text" id="product-name" required maxlength="200" />
+        </div>
+        <div class="form-group">
+          <label for="product-category">دسته‌بندی *</label>
+          <select id="product-category" required></select>
+        </div>
+        <div class="form-group">
+          <label for="product-description">توضیحات</label>
+          <textarea id="product-description" maxlength="2000"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="product-price">قیمت (تومان) *</label>
+            <input type="number" id="product-price" required min="0" step="1000" />
+          </div>
+          <div class="form-group">
+            <label for="product-stock">موجودی *</label>
+            <input type="number" id="product-stock" required min="0" step="1" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="product-image">آدرس تصویر (URL)</label>
+          <input type="url" id="product-image" placeholder="https://..." />
+        </div>
+        <div class="form-group">
+          <label for="product-active">وضعیت</label>
+          <select id="product-active">
+            <option value="true">فعال</option>
+            <option value="false">غیرفعال</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="product-cancel">انصراف</button>
+          <button type="submit" class="btn btn-primary" id="product-submit">ذخیره</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="category-modal">
+    <div class="modal">
+      <h3 id="category-modal-title">افزودن دسته‌بندی</h3>
+      <div id="category-modal-alert" class="alert alert-error"></div>
+      <form id="category-form">
+        <input type="hidden" id="category-id" />
+        <div class="form-group">
+          <label for="category-name">نام دسته‌بندی *</label>
+          <input type="text" id="category-name" required maxlength="100" />
+        </div>
+        <div class="form-group">
+          <label for="category-active">وضعیت</label>
+          <select id="category-active">
+            <option value="true">فعال</option>
+            <option value="false">غیرفعال</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" id="category-cancel">انصراف</button>
+          <button type="submit" class="btn btn-primary" id="category-submit">ذخیره</button>
+        </div>
+      </form>
+    </div>
+  </div>

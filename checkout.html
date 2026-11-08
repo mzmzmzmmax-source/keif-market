@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تکمیل سفارش | کیف مارکت</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #f6f7fb;
+      color: #252525;
+      line-height: 1.9;
+    }
+    header {
+      background: #fff;
+      padding: 18px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    header h1 { margin: 0; font-size: 23px; }
+    .container {
+      width: 92%;
+      max-width: 720px;
+      margin: 25px auto;
+    }
+    .card {
+      background: white;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 14px;
+      box-shadow: 0 3px 15px #00000009;
+    }
+    h2 { font-size: 18px; margin-top: 0; }
+    label {
+      display: block;
+      margin: 12px 0 5px;
+      font-size: 14px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 14px;
+      background: #fff;
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .product {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .total {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      font-size: 18px;
+      margin-top: 15px;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      font-family: inherit;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .message {
+      padding: 12px;
+      border-radius: 9px;
+      margin-top: 15px;
+      display: none;
+      font-size: 14px;
+    }
+    .error { background: #ffe9e9; color: #a40000; }
+    .success { background: #e6f7e9; color: #17652b; }
+    .back {
+      display: block;
+      text-align: center;
+      color: #333;
+      margin: 20px;
+      text-decoration: none;
+    }
+    @media(max-width: 500px) {
+      .row { grid-template-columns: 1fr; gap: 0; }
+      .card { padding: 17px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>کیف مارکت</h1>
+  <div>تکمیل اطلاعات و ثبت سفارش</div>
+</header>
+
+<main class="container">
+
+  <section class="card">
+    <h2>اطلاعات خریدار</h2>
+
+    <form id="orderForm">
+      <div class="row">
+        <div>
+          <label for="firstName">نام</label>
+          <input id="firstName" required maxlength="60">
+        </div>
+        <div>
+          <label for="lastName">نام خانوادگی</label>
+          <input id="lastName" required maxlength="60">
+        </div>
+      </div>
+
+      <label for="phone">شماره موبایل</label>
+      <input id="phone" type="tel" inputmode="numeric"
+        placeholder="09123456789" required>
+
+      <div class="row">
+        <div>
+          <label for="province">استان</label>
+          <input id="province" required maxlength="60">
+        </div>
+        <div>
+          <label for="city">شهر</label>
+          <input id="city" required maxlength="60">
+        </div>
+      </div>
+
+      <label for="address">نشانی کامل</label>
+      <textarea id="address" required maxlength="1000"></textarea>
+
+      <label for="postalCode">کد پستی ۱۰ رقمی</label>
+      <input id="postalCode" inputmode="numeric"
+        maxlength="10" required>
+
+      <label for="notes">توضیحات سفارش (اختیاری)</label>
+      <textarea id="notes" maxlength="500"></textarea>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>خلاصه سفارش</h2>
+    <div id="cartItems">در حال دریافت سبد خرید...</div>
+    <div class="total">
+      <span>مبلغ کل:</span>
+      <span id="totalPrice">۰ تومان</span>
+    </div>
+    <div id="message" class="message"></div>
+    <button id="submitOrder" form="orderForm" disabled>
+      ثبت سفارش
+    </button>
+  </section>
+
+  <a class="back" href="./index.html">بازگشت به فروشگاه</a>
+
+</main>
+
+<script>
+const SUPABASE_URL = "https://vtderzmdfobjrgbzrwmm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI";
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+const cartItemsElement = document.getElementById("cartItems");
+const totalElement = document.getElementById("totalPrice");
+const submitButton = document.getElementById("submitOrder");
+const messageElement = document.getElementById("message");
+
+let productsInCart = [];
+let totalAmount = 0;
+
+function formatPrice(price) {
+  return Number(price).toLocaleString("fa-IR") + " تومان";
+}
+
+function showMessage(text, type) {
+  messageElement.textContent = text;
+  messageElement.className = "message " + type;
+  messageElement.style.display = "block";
+}
+
+async function loadCart() {
+  try {
+    const cart = JSON.parse(localStorage.getItem("km_cart") || "{}");
+    const entries = Object.entries(cart)
+      .filter(([id, qty]) =>
+        /^\d+$/.test(String(id)) &&
+        Number(qty) > 0 &&
+        Number.isInteger(Number(qty))
+      );
+
+    if (!entries.length) {
+      cartItemsElement.textContent = "سبد خرید شما خالی است.";
+      totalElement.textContent = formatPrice(0);
+      return;
+    }
+
+    const ids = entries.map(([id]) => Number(id));
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("id,name,price,stock,is_active")
+      .in("id", ids);
+
+    if (error) throw error;
+
+    const productMap = new Map(
+      (data || []).map(product => [String(product.id), product])
+    );
+
+    productsInCart = entries.map(([id, quantity]) => {
+      const product = productMap.get(String(id));
+      if (!product || !product.is_active) {
+        throw new Error("یکی از محصولات سبد خرید دیگر در دسترس نیست.");
+      }
+      return {
+        product_id: Number(product.id),
+        quantity: Number(quantity),
+        name: product.name,
+        price: Number(product.price),
+        stock: Number(product.stock)
+      };
+    });
+
+    totalAmount = 0;
+    cartItemsElement.innerHTML = "";
+
+    productsInCart.forEach(product => {
+      totalAmount += product.price * product.quantity;
+
+      const line = document.createElement("div");
+      line.className = "product";
+
+      const name = document.createElement("span");
+      name.textContent =
+        product.name + " × " +
+        product.quantity.toLocaleString("fa-IR");
+
+      const price = document.createElement("strong");
+      price.textContent = formatPrice(
+        product.price * product.quantity
+      );
+
+      line.append(name, price);
+      cartItemsElement.appendChild(line);
+    });
+
+    totalElement.textContent = formatPrice(totalAmount);
+    submitButton.disabled = false;
+
+  } catch (error) {
+    cartItemsElement.textContent =
+      error.message || "دریافت سبد خرید با خطا مواجه شد.";
+    submitButton.disabled = true;
+  }
+}
+
+document.getElementById("orderForm").addEventListener("submit",
+  async function(event) {
+    event.preventDefault();
+
+    if (!productsInCart.length) {
+      showMessage("سبد خرید خالی است.", "error");
+      return;
+    }
+
+    const customer = {
+      customer_first_name:
+        document.getElementById("firstName").value.trim(),
+      customer_last_name:
+        document.getElementById("lastName").value.trim(),
+      customer_phone:
+        document.getElementById("phone").value.trim(),
+      province:
+        document.getElementById("province").value.trim(),
+      city:
+        document.getElementById("city").value.trim(),
+      full_address:
+        document.getElementById("address").value.trim(),
+      postal_code:
+        document.getElementById("postalCode").value.trim(),
+      delivery_notes:
+        document.getElementById("notes").value.trim()
+    };
+
+    if (!/^09\d{9}$/.test(customer.customer_phone)) {
+      showMessage("شماره موبایل باید ۱۱ رقم و با 09 شروع شود.", "error");
+      return;
+    }
+
+    if (!/^\d{10}$/.test(customer.postal_code)) {
+      showMessage("کد پستی باید دقیقاً ۱۰ رقم باشد.", "error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "در حال ثبت سفارش...";
+
+    try {
+      const response = await fetch(
+        SUPABASE_URL + "/functions/v1/create-order",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
+          },
+          body: JSON.stringify({
+            customer,
+            items: productsInCart.map(product => ({
+              product_id: product.product_id,
+              quantity: product.quantity
+            }))
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.error || "ثبت سفارش انجام نشد."
+        );
+      }
+
+      localStorage.removeItem("km_cart");
+
+      cartItemsElement.textContent = "سفارش شما ثبت شد.";
+      totalElement.textContent = formatPrice(0);
+      showMessage(
+        "سفارش با موفقیت ثبت شد. کد سفارش: " +
+        result.order_id,
+        "success"
+      );
+
+      submitButton.textContent = "سفارش ثبت شد";
+
+    } catch (error) {
+      showMessage(
+        error.message || "خطا در ارتباط با سرور.",
+        "error"
+      );
+      submitButton.disabled = false;
+      submitButton.textContent = "تلاش دوباره برای ثبت سفارش";
+    }
+  }
+);
+
+loadCart();
+</script>
+
+</body>
+</html>

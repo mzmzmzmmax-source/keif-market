@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -156,7 +157,7 @@
     <section class="about" id="about"><div><h2>درباره کیف مارکت</h2><p>کیف مارکت با هدف فراهم‌کردن انتخابی ساده و خوش‌سلیقه از کیف‌های زنانه ساخته شده است. این نسخه، پیش‌نمایش اولیه فروشگاه است و اطلاعات محصولات آن نمونه هستند.</p></div><div class="aboutbox"><span>♡</span><div><b>همراه انتخاب تو</b><small>برای پرسش درباره محصولات و سفارش، راه ارتباطی فروشگاه را اضافه خواهیم کرد.</small></div></div></section>
   </main>
   <footer class="wrap footer"><span>© کیف مارکت · نسخه آزمایشی فروشگاه</span><span>طراحی‌شده با سلیقه کلاسیک</span></footer>
-  <div class="overlay" id="cartOverlay"><aside class="drawer"><div class="drawerhead"><h2>سبد خرید</h2><button class="close" data-close="cartOverlay">بستن</button></div><div id="cartItems"></div><div class="total"><span>جمع کل</span><span id="cartTotal">۰ تومان</span></div><button class="checkout" id="checkout">ادامه ثبت سفارش</button><p class="note">این نسخه آزمایشی است؛ پرداخت آنلاین و ثبت سفارش واقعی هنوز فعال نیست. پس از تعیین شماره تماس فروشگاه و راهکار پرداخت، این بخش تکمیل می‌شود.</p></aside></div>
+  <div class="overlay" id="cartOverlay"><aside class="drawer"><div class="drawerhead"><h2>سبد خرید</h2><button class="close" data-close="cartOverlay">بستن</button></div><div id="cartItems"></div><div class="total"><span>جمع کل</span><span id="cartTotal">۰ تومان</span></div><button class="checkout" id="checkout">ادامه ثبت سفارش</button><p class="note">برای ثبت سفارش اینترنتی، اطلاعات گیرنده و نشانی را در مرحله بعد وارد کن. پرداخت آنلاین هنوز به درگاه بانکی متصل نشده است.</p></aside></div>
   <div class="overlay" id="adminOverlay"><aside class="drawer"><div class="drawerhead"><h2>مدیریت محصولات</h2><button class="close" data-close="adminOverlay">بستن</button></div><p class="note">در این پیش‌نمایش می‌توانی محصولات را در همین مرورگر اضافه یا حذف کنی. این تغییرات هنوز بین مدیران و دستگاه‌های مختلف همگام نمی‌شوند و پنل امن آنلاین نیست.</p><form class="adminform" id="productForm"><input id="pName" placeholder="نام محصول" required><input id="pPrice" type="number" min="0" placeholder="قیمت به تومان" required><select id="pCategory"><option>روزمره</option><option>مجلسی</option><option>اسپرت</option></select><button type="submit">افزودن محصول</button></form><div class="adminlist" id="adminList"></div><p class="note">برای مدیریت چندنفره و امن، در مرحله بعد باید سایت به پایگاه داده و سیستم ورود مدیران متصل شود.</p></aside></div>
   <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -164,17 +165,14 @@
 (function(){
   'use strict';
 
-  // ===== تنظیمات =====
   const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
 
-  // ===== ابزارهای امن =====
   const fmt = n => new Intl.NumberFormat('fa-IR').format(Number(n) || 0) + ' تومان';
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function safeGet(key, fallback){ try { return JSON.parse(localStorage.getItem(key) || fallback); } catch(e){ return JSON.parse(fallback); } }
   function safeSet(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){ /* ignore */ } }
 
-  // ===== وضعیت =====
   let products = [];
   let categories = [];
   let cart = safeGet('km_cart', '{}');
@@ -187,7 +185,6 @@
 
   function toast(t){ toastEl.textContent = t; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'), 1900); }
 
-  // ===== رندر دسته‌بندی‌ها =====
   function renderCategories(){
     const icons = ['👜','🤎','✨','🎒','👝','🧡'];
     const all = [{ id:'همه', name:'همه کیف‌ها' }, ...categories];
@@ -201,7 +198,6 @@
     });
   }
 
-  // ===== رندر محصولات =====
   function renderProducts(){
     const q = document.getElementById('search').value.trim().toLocaleLowerCase('fa');
     let arr = products.filter(p =>
@@ -241,13 +237,11 @@
         </article>`;
     }).join('');
 
-    // رویداد کلیک دکمه‌های افزودن (به‌جای onclick درون‌خطی)
     grid.querySelectorAll('.add').forEach(btn => {
       btn.addEventListener('click', () => addToCart(Number(btn.dataset.id)));
     });
   }
 
-  // ===== سبد خرید =====
   window.addToCart = function(id){
     const p = products.find(x => Number(x.id) === Number(id));
     if (!p) return;
@@ -288,7 +282,6 @@
     document.getElementById('cartTotal').textContent = fmt(total);
   }
 
-  // ===== دریافت داده از Supabase =====
   async function loadStore(){
     loadMessage.textContent = 'در حال دریافت محصولات فروشگاه...';
     loadMessage.style.display = '';
@@ -320,12 +313,10 @@
       loadMessage.textContent = 'خطا در دریافت اطلاعات فروشگاه: ' + (err && err.message ? err.message : err);
       grid.innerHTML = '<div class="empty">بارگذاری محصولات انجام نشد. تنظیمات دسترسی خواندن عمومی در Supabase باید بررسی شود.</div>';
     } finally {
-      // در هر صورت پیام بارگذاری بعد از پایان کار مخفی می‌شود اگر داده وجود دارد
       if (products.length) loadMessage.textContent = '';
     }
   }
 
-  // ===== رویدادها =====
   function bindEvents(){
     document.getElementById('search').addEventListener('input', renderProducts);
     document.getElementById('sort').addEventListener('change', renderProducts);
@@ -333,10 +324,22 @@
     document.querySelectorAll('[data-close]').forEach(b => {
       b.onclick = () => document.getElementById(b.dataset.close).classList.remove('show');
     });
-    document.getElementById('checkout').onclick = () => toast('ثبت سفارش و پرداخت در نسخه بعد فعال می‌شود');
+
+    // انتقال به صفحه ثبت سفارش اینترنتی
+    document.getElementById('checkout').onclick = () => {
+      const entries = Object.entries(cart).filter(([id, n]) =>
+        Number(n) > 0 && products.some(p => Number(p.id) === Number(id))
+      );
+
+      if (!entries.length) {
+        toast('سبد خرید خالی است');
+        return;
+      }
+
+      window.location.href = 'checkout.html';
+    };
   }
 
-  // ===== شروع =====
   function start(){
     bindEvents();
     loadStore();
@@ -351,3 +354,4 @@
 </script>
 </body>
 </html>
+ 

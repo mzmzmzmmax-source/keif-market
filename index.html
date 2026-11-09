@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -985,7 +986,7 @@
         flex-direction: column;
       }
 
-      /* تنظیمات سبد خرید در موبایل */
+      /* سبد خرید در موبایل عمودی */
       .drawer {
         width: 100%;
         max-width: 100vw;
@@ -997,17 +998,10 @@
         font-size: 18px;
       }
 
-      /* نام و قیمت در ردیف اول؛ کنترل تعداد در ردیف دوم */
       .cartitem {
-        grid-template-columns: minmax(0, 1fr);
-        align-items: start;
-        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 7px;
         padding: 13px 0;
-      }
-
-      .cartproduct {
-        width: 100%;
-        min-width: 0;
       }
 
       .cartproduct b {
@@ -1018,32 +1012,20 @@
         font-size: 10px;
       }
 
-      /* جلوگیری از مخفی شدن دکمه‌های مثبت و منفی */
       .qty {
-        display: flex;
-        width: max-content;
-        max-width: 100%;
-        min-width: 0;
-        justify-self: start;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 5px;
-        direction: ltr;
-        overflow: visible;
-        flex-shrink: 0;
+        gap: 5px;
+        padding: 4px;
       }
 
       .qty button {
-        flex: 0 0 32px;
-        width: 32px;
-        height: 32px;
-        min-width: 32px;
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        flex-basis: 30px;
       }
 
       .qty span {
-        flex: 0 0 auto;
-        min-width: 24px;
+        min-width: 21px;
         font-size: 12px;
       }
 
@@ -1059,7 +1041,7 @@
 
     @media(max-width: 350px) {
       .cartitem {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: 1fr;
         gap: 10px;
       }
 
@@ -1230,7 +1212,7 @@
     'use strict';
 
     const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_IQ';
+    const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
 
     const fmt = number =>
       new Intl.NumberFormat('fa-IR').format(Number(number) || 0) + ' تومان';

@@ -365,6 +365,35 @@ tr:hover td{background:#fffaf1}
   width:auto;
   white-space:nowrap;
 }
+.order-finance{
+  display:grid;
+  gap:7px;
+  padding:11px 13px;
+  margin:12px 0;
+  background:#f8f1e6;
+  border-radius:10px;
+  font-size:13px;
+}
+.shipping-controls{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+.shipping-controls label{
+  font-size:13px;
+  font-weight:bold;
+}
+.shipping-controls input{
+  width:150px;
+  min-width:0;
+  padding:9px;
+}
+.shipping-controls .btn{
+  width:auto;
+  white-space:nowrap;
+}
 .status-pending{background:#fff1d8;color:#8c5b15}
 .status-confirmed{background:#e8f1ff;color:#285b9b}
 .status-processing{background:#f1e9ff;color:#6840a0}
@@ -1021,11 +1050,13 @@ async function loadOrders(){
             ${items}
           </div>
 
-          <div class="order-bottom">
-            <strong class="price">
-              مبلغ کل: ${money(order.total_amount)}
-            </strong>
+          <div class="order-finance">
+            <div><b>مبلغ کالاها:</b> ${money(order.subtotal)}</div>
+            <div><b>هزینه ارسال:</b> ${money(order.shipping_fee)}</div>
+            <div class="price"><b>مبلغ نهایی:</b> ${money(order.total_amount)}</div>
+          </div>
 
+          <div class="order-bottom">
             <div class="order-controls">
               <select
                 id="status-${Number(order.id)}"
@@ -1042,6 +1073,27 @@ async function loadOrders(){
                 ذخیره وضعیت
               </button>
             </div>
+
+            ${["pending_confirmation","confirmed"].includes(order.status) ? `
+              <div class="shipping-controls">
+                <label for="shipping-fee-${Number(order.id)}">هزینه ارسال (تومان)</label>
+                <input
+                  type="number"
+                  id="shipping-fee-${Number(order.id)}"
+                  min="0"
+                  step="1"
+                  inputmode="numeric"
+                  value="${Number(order.shipping_fee) || 0}"
+                  aria-label="هزینه ارسال به تومان"
+                >
+                <button
+                  class="btn btn-outline btn-sm"
+                  onclick="updateOrderShippingFee(${Number(order.id)})"
+                >
+                  ثبت هزینه ارسال
+                </button>
+              </div>
+            ` : ""}
           </div>
         </article>
       `;
@@ -1122,6 +1174,81 @@ window.updateOrderStatus = async id=>{
     if(button){
       button.disabled = false;
       button.textContent = "ذخیره وضعیت";
+    }
+  }
+};
+
+window.updateOrderShippingFee = async id=>{
+  if(orderUpdateInProgress.has(String(id)))return;
+
+  const input = document.getElementById("shipping-fee-" + id);
+  if(!input)return;
+
+  const rawFee = input.value.trim();
+
+  if(!/^\\d+$/.test(rawFee)){
+    showAlert(
+      document.getElementById("orders-alert"),
+      "هزینه ارسال را به‌صورت عدد صحیح و غیرمنفی وارد کنید."
+    );
+    return;
+  }
+
+  const shippingFee = Number(rawFee);
+
+  if(!Number.isSafeInteger(shippingFee)){
+    showAlert(
+      document.getElementById("orders-alert"),
+      "مبلغ واردشده خارج از محدوده مجاز است."
+    );
+    return;
+  }
+
+  const button = input.parentElement.querySelector("button");
+  const alertEl = document.getElementById("orders-alert");
+
+  orderUpdateInProgress.add(String(id));
+
+  if(button){
+    button.disabled = true;
+    button.textContent = "در حال ثبت...";
+  }
+
+  try{
+    const {data,error} = await sb.rpc(
+      "set_order_shipping_fee",
+      {
+        p_order_id:id,
+        p_shipping_fee:shippingFee
+      }
+    );
+
+    if(error)throw error;
+
+    showAlert(
+      alertEl,
+      "هزینه ارسال ثبت شد. مبلغ نهایی: " + money(data),
+      "success"
+    );
+
+    await loadOrders();
+
+  }catch(error){
+    console.error("Update shipping fee error:",error);
+
+    showAlert(
+      alertEl,
+      "ثبت هزینه ارسال انجام نشد: " + (error.message || "خطای نامشخص")
+    );
+
+    await loadOrders();
+
+  }finally{
+    orderUpdateInProgress.delete(String(id));
+
+    if(button){
+      button.disabled = false;
+      button.textContent = "ثبت هزینه ارسال";
     }
   }
 };

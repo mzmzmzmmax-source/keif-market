@@ -1,9 +1,8 @@
-
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="theme-color" content="#f5efe5">
   <meta name="description" content="کیف مارکت؛ انتخابی شیک برای هر روز و هر سلیقه">
   <title>کیف مارکت | فروشگاه کیف زنانه</title>
@@ -27,9 +26,13 @@
       --shadow: 0 18px 45px #4b352012;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       margin: 0;
@@ -38,8 +41,13 @@
       font-family: 'Vazirmatn', Tahoma, sans-serif;
     }
 
-    button, input, select, textarea { font: inherit; }
-    button { cursor: pointer; }
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
 
     .topline {
       background: var(--brown-dark);
@@ -110,7 +118,9 @@
       transition: color .2s;
     }
 
-    .navlinks a:hover { color: var(--gold); }
+    .navlinks a:hover {
+      color: var(--gold);
+    }
 
     .actions {
       display: flex;
@@ -118,7 +128,8 @@
       align-items: center;
     }
 
-    .iconbtn, .adminbtn {
+    .iconbtn,
+    .adminbtn {
       border: 1px solid var(--line);
       background: var(--paper);
       color: var(--ink);
@@ -127,7 +138,8 @@
       transition: .2s;
     }
 
-    .iconbtn:hover, .adminbtn:hover {
+    .iconbtn:hover,
+    .adminbtn:hover {
       border-color: var(--gold);
       background: #f8f0e4;
     }
@@ -223,7 +235,8 @@
       border: 1px solid #c5a46d;
     }
 
-    .hero-art:before, .hero-art:after {
+    .hero-art:before,
+    .hero-art:after {
       content: "";
       position: absolute;
       border: 1px solid #fff7;
@@ -336,7 +349,9 @@
       font-size: 24px;
     }
 
-    .cat b { font-size: 14px; }
+    .cat b {
+      font-size: 14px;
+    }
 
     .cat small {
       display: block;
@@ -573,7 +588,9 @@
       color: var(--gold);
     }
 
-    .aboutbox b { font-size: 13px; }
+    .aboutbox b {
+      font-size: 13px;
+    }
 
     .aboutbox small {
       display: block;
@@ -603,7 +620,9 @@
       overflow: hidden;
     }
 
-    .overlay.show { display: flex; }
+    .overlay.show {
+      display: flex;
+    }
 
     .drawer {
       background: var(--paper);
@@ -718,7 +737,9 @@
       padding: 0;
     }
 
-    .qty button:active { transform: scale(.94); }
+    .qty button:active {
+      transform: scale(.94);
+    }
 
     .qty span {
       min-width: 24px;
@@ -759,7 +780,9 @@
       box-shadow: 0 7px 18px #79543c22;
     }
 
-    .checkout:hover { filter: brightness(1.08); }
+    .checkout:hover {
+      filter: brightness(1.08);
+    }
 
     .note {
       font-size: 11px;
@@ -768,9 +791,13 @@
       margin-top: 12px;
     }
 
-    .adminform { display: grid; gap: 10px; }
+    .adminform {
+      display: grid;
+      gap: 10px;
+    }
 
-    .adminform input, .adminform select {
+    .adminform input,
+    .adminform select {
       border: 1px solid var(--line);
       border-radius: 10px;
       padding: 11px;
@@ -786,7 +813,9 @@
       color: #fff;
     }
 
-    .adminlist { margin-top: 20px; }
+    .adminlist {
+      margin-top: 20px;
+    }
 
     .adminrow {
       display: flex;
@@ -822,25 +851,48 @@
       text-align: center;
     }
 
-    .toast.show { display: block; }
-
-    @media(max-width: 850px) {
-      .hero { grid-template-columns: 1fr; }
-      .hero-art { min-height: 270px; }
-      .products { grid-template-columns: repeat(2, 1fr); }
-      .navlinks { display: none; }
-      .about { grid-template-columns: 1fr; }
+    .toast.show {
+      display: block;
     }
 
+    @media(max-width: 850px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-art {
+        min-height: 270px;
+      }
+
+      .products {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .navlinks {
+        display: none;
+      }
+
+      .about {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* =========================================
+       اصلاحات نهایی و قطعی برای موبایل (حالت عمودی)
+       ========================================= */
     @media(max-width: 480px) {
-      .wrap { width: calc(100% - 24px); }
+      .wrap {
+        width: calc(100% - 24px);
+      }
 
       .nav {
         padding: 14px 0;
         gap: 8px;
       }
 
-      .brand { gap: 7px; }
+      .brand {
+        gap: 7px;
+      }
 
       .brandmark {
         width: 38px;
@@ -849,9 +901,17 @@
         font-size: 20px;
       }
 
-      .brand strong { font-size: 16px; }
-      .brand small { font-size: 9px; }
-      .actions { gap: 5px; }
+      .brand strong {
+        font-size: 16px;
+      }
+
+      .brand small {
+        font-size: 9px;
+      }
+
+      .actions {
+        gap: 5px;
+      }
 
       .adminbtn {
         font-size: 10px;
@@ -864,10 +924,21 @@
         white-space: nowrap;
       }
 
-      .hero { margin: 18px 0 32px; }
-      .hero-copy { min-height: 290px; }
-      .hero-art { min-height: 240px; }
-      .categories { gap: 8px; }
+      .hero {
+        margin: 18px 0 32px;
+      }
+
+      .hero-copy {
+        min-height: 290px;
+      }
+
+      .hero-art {
+        min-height: 240px;
+      }
+
+      .categories {
+        gap: 8px;
+      }
 
       .cat {
         padding: 11px 8px;
@@ -880,22 +951,44 @@
         font-size: 20px;
       }
 
-      .cat b { font-size: 11px; }
-      .cat small { font-size: 9px; }
-      .products { gap: 10px; }
+      .cat b {
+        font-size: 11px;
+      }
+
+      .cat small {
+        font-size: 9px;
+      }
+
+      .products {
+        gap: 10px;
+      }
 
       .productvisual {
         height: 155px;
         flex: 0 0 155px;
       }
 
-      .productbody { padding: 11px; }
-      .productbody h3 { font-size: 12px; }
-      .price { font-size: 12px; }
-      .add { padding: 7px 8px; }
-      .footer { flex-direction: column; }
+      .productbody {
+        padding: 11px;
+      }
 
-      /* استایل سبد خرید در موبایل */
+      .productbody h3 {
+        font-size: 12px;
+      }
+
+      .price {
+        font-size: 12px;
+      }
+
+      .add {
+        padding: 7px 8px;
+      }
+
+      .footer {
+        flex-direction: column;
+      }
+
+      /* --- استایل سبد خرید در موبایل --- */
       .drawer {
         width: 100vw !important;
         max-width: 100vw !important;
@@ -905,7 +998,9 @@
         overflow-x: hidden !important;
       }
 
-      .drawerhead h2 { font-size: 18px; }
+      .drawerhead h2 {
+        font-size: 18px;
+      }
 
       #cartItems {
         display: flex !important;
@@ -937,8 +1032,13 @@
         padding-left: 5px !important;
       }
 
-      .cartproduct b { font-size: 12px !important; }
-      .cartproduct small { font-size: 10px !important; }
+      .cartproduct b {
+        font-size: 12px !important;
+      }
+
+      .cartproduct small {
+        font-size: 10px !important;
+      }
 
       .cartproduct .cart-subtotal {
         font-size: 11px !important;
@@ -986,9 +1086,17 @@
         gap: 10px !important;
       }
 
-      .qty { align-self: flex-end !important; }
-      .categories { grid-template-columns: 1fr 1fr; }
-      .brand strong { font-size: 14px; }
+      .qty {
+        align-self: flex-end !important;
+      }
+
+      .categories {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .brand strong {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
@@ -1145,7 +1253,7 @@
     'use strict';
 
     const SUPABASE_URL = 'https://vtderzmdfobjrgbzrwmm.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_IQh9h80QI';
+    const SUPABASE_ANON_KEY = 'sb_publishable_fv1LNGMoRSXVo0NbvljCMQ_Ih9h80QI';
 
     const fmt = number =>
       new Intl.NumberFormat('fa-IR').format(Number(number) || 0) + ' تومان';
@@ -1158,21 +1266,6 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
-
-    // اصلاح امنیتی: فقط آدرس تصویر با پروتکل HTTPS پذیرفته می‌شود.
-    function safeImageUrl(value) {
-      if (!value || typeof value !== 'string') return '';
-
-      try {
-        const url = new URL(value, window.location.href);
-
-        if (url.protocol !== 'https:') return '';
-
-        return url.href;
-      } catch (error) {
-        return '';
-      }
-    }
 
     function safeGet(key, fallback) {
       try {
@@ -1295,16 +1388,12 @@
           )?.name ||
           'کیف زنانه';
 
-        // آدرس تصویر پیش از قرارگرفتن در HTML اعتبارسنجی می‌شود.
-        const imageUrl = safeImageUrl(product.image_url);
-
-        const image = imageUrl
+        const image = product.image_url
           ? `
             <img
-              src="${esc(imageUrl)}"
+              src="${esc(product.image_url)}"
               alt="${esc(product.name)}"
               loading="lazy"
-              referrerpolicy="no-referrer"
               onerror="this.style.display='none'"
             >
           `

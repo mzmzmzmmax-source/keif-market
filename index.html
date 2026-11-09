@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
@@ -878,6 +877,7 @@
       }
     }
 
+    /* اصلاحات اختصاصی برای موبایل (حالت عمودی) */
     @media(max-width: 480px) {
       .wrap {
         width: calc(100% - 24px);
@@ -986,22 +986,40 @@
         flex-direction: column;
       }
 
-      /* سبد خرید در موبایل عمودی */
+      /* --- اصلاحات سبد خرید در موبایل عمودی --- */
       .drawer {
-        width: 100%;
+        width: 100vw;
         max-width: 100vw;
+        box-sizing: border-box;
         padding: 16px;
         padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        overflow-x: hidden;
       }
 
       .drawerhead h2 {
         font-size: 18px;
       }
 
+      #cartItems {
+        display: block; 
+        width: 100%;
+        overflow: hidden;
+      }
+
       .cartitem {
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 7px;
+        display: flex; 
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 8px;
         padding: 13px 0;
+        box-sizing: border-box;
+      }
+
+      .cartproduct {
+        flex: 1 1 0%;
+        min-width: 0;
+        word-wrap: break-word;
       }
 
       .cartproduct b {
@@ -1012,49 +1030,60 @@
         font-size: 10px;
       }
 
+      .cartproduct .cart-subtotal {
+        font-size: 11px;
+      }
+
       .qty {
+        flex: 0 0 auto; 
         gap: 5px;
         padding: 4px;
       }
 
       .qty button {
-        width: 30px;
-        height: 30px;
-        min-width: 30px;
-        flex-basis: 30px;
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        flex-basis: 28px;
+        font-size: 16px;
       }
 
       .qty span {
-        min-width: 21px;
+        min-width: 20px;
         font-size: 12px;
       }
 
       .total {
         font-size: 13px;
         padding: 13px;
+        width: 100%;
+        box-sizing: border-box;
       }
 
       .checkout {
         padding: 13px;
+        width: 100%;
+        box-sizing: border-box;
       }
     }
 
     @media(max-width: 350px) {
-      .cartitem {
-        grid-template-columns: 1fr;
-        gap: 10px;
-      }
-
-      .qty {
-        justify-self: start;
-      }
-
       .categories {
         grid-template-columns: 1fr 1fr;
       }
 
       .brand strong {
         font-size: 14px;
+      }
+      
+      .cartitem {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .qty {
+        align-self: flex-start;
       }
     }
   </style>

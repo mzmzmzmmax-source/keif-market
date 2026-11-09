@@ -1038,13 +1038,12 @@
       localStorage.removeItem("km_cart");
 
       productsInCart = [];
-      totalAmount = 0;
       orderCompleted = true;
 
       cartItemsElement.textContent =
         "سفارش شما با موفقیت ثبت شد.";
 
-      totalElement.textContent = formatPrice(0);
+      // مبلغ کالاها پس از ثبت موفق سفارش در خلاصه باقی می‌ماند.
 
       showMessage(
         "درخواست سفارش شما با موفقیت ثبت شد. کد پیگیری: " +

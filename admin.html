@@ -1186,7 +1186,7 @@ window.updateOrderShippingFee = async id=>{
 
   const rawFee = input.value.trim();
 
-  if(!/^\\d+$/.test(rawFee)){
+  if(!/^\d+$/.test(rawFee)){
     showAlert(
       document.getElementById("orders-alert"),
       "هزینه ارسال را به‌صورت عدد صحیح و غیرمنفی وارد کنید."

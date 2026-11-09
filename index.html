@@ -605,6 +605,23 @@
       display: flex;  
       justify-content: space-between;  
       gap: 12px;  
+    }
+
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 18px;
+    }
+
+    .footer-links a {
+      color: var(--brown);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--gold);
     }  
   
     /* سبد خرید */  
@@ -1203,6 +1220,14 @@
 
   </main>    <footer class="wrap footer">  
     <span>© کیف مارکت · فروشگاه اینترنتی کیف</span>  
+    <nav class="footer-links" aria-label="لینک‌های قانونی">
+      <a href="about.html">درباره ما</a>
+      <a href="contact.html">تماس با ما</a>
+      <a href="terms.html">قوانین خرید</a>
+      <a href="privacy.html">حریم خصوصی</a>
+      <a href="shipping.html">ارسال و پرداخت</a>
+      <a href="returns.html">بازگشت کالا</a>
+    </nav>
     <span>طراحی‌شده با سلیقه کلاسیک</span>  
   </footer>    <!-- سبد خرید -->    <div class="overlay" id="cartOverlay">  
     <aside class="drawer">  

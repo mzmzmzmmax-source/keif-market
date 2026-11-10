@@ -605,13 +605,13 @@ tr:hover td{background:#fffaf1}
 
       <input type="hidden" id="product-image">
 
-      <section class="image-manager" id="product-image-manager" style="display:none">
+      <section class="image-manager" id="product-image-manager">
         <h4>گالری تصاویر محصول</h4>
-        <p class="variant-help">حداکثر ۶ تصویر برای هر محصول؛ تصویر عمومی را به‌عنوان تصویر اصلی انتخاب کن و تصاویر دیگر را به رنگ مربوط اختصاص بده.</p>
+        <p class="variant-help">حداکثر ۶ تصویر برای هر محصول؛ ابتدا محصول را ذخیره کن، سپس همین‌جا تصاویر عمومی یا تصاویر مخصوص هر رنگ را بارگذاری کن.</p>
         <div class="image-upload-row">
           <div>
             <label for="product-gallery-files">انتخاب تصاویر (JPG، PNG، WEBP)</label>
-            <input type="file" id="product-gallery-files" accept="image/jpeg,image/png,image/webp" multiple>
+            <input type="file" id="product-gallery-files" accept="image/jpeg,image/png,image/webp" multiple disabled>
           </div>
           <div>
             <label for="gallery-variant-select">اختصاص تصاویر به</label>
@@ -619,10 +619,10 @@ tr:hover td{background:#fffaf1}
               <option value="">تصویر عمومی محصول</option>
             </select>
           </div>
-          <button type="button" class="btn btn-outline" id="gallery-upload-btn">آپلود تصاویر</button>
+          <button type="button" class="btn btn-outline" id="gallery-upload-btn" disabled>آپلود تصاویر</button>
         </div>
         <div class="image-count" id="gallery-image-count">۰ از ۶ تصویر</div>
-        <div id="gallery-image-list"><div class="variant-help">برای مشاهده تصاویر، محصول را باز کن.</div></div>
+        <div id="gallery-image-list"><div class="variant-help">برای فعال‌شدن آپلود، ابتدا محصول جدید را ذخیره کن.</div></div>
       </section>
 
       <section class="variant-manager" id="variant-manager" style="display:none">
@@ -1057,6 +1057,7 @@ async function loadOrders(){
         order_items(
           id,
           product_name,
+          variant_name,
           unit_price,
           quantity,
           line_total
@@ -1075,6 +1076,7 @@ async function loadOrders(){
       const items = (order.order_items || []).map(item=>`
         <div>
           • ${escapeHtml(item.product_name)}
+          — رنگ: ${escapeHtml(item.variant_name || "بدون رنگ مشخص")}
           — تعداد: ${faNum(item.quantity)}
           — ${money(item.line_total)}
         </div>
@@ -2107,7 +2109,9 @@ async function openProductModal(edit=null){
   const variantSection = document.getElementById("variant-manager");
   variantSection.style.display = edit ? "block" : "none";
   const imageSection = document.getElementById("product-image-manager");
-  imageSection.style.display = edit ? "block" : "none";
+  imageSection.style.display = "block";
+  document.getElementById("product-gallery-files").disabled = !edit;
+  document.getElementById("gallery-upload-btn").disabled = !edit;
 
   if(edit){
     await loadVariantManager(edit.id);
@@ -2116,8 +2120,11 @@ async function openProductModal(edit=null){
     productVariantsCache = [];
     productImagesCache = [];
     document.getElementById("variant-list").innerHTML = "";
-    document.getElementById("gallery-image-list").innerHTML = "";
+    document.getElementById("gallery-image-list").innerHTML = '<div class="variant-help">برای فعال‌شدن آپلود، ابتدا محصول جدید را ذخیره کن.</div>';
     document.getElementById("gallery-image-count").textContent = "۰ از ۶ تصویر";
+    document.getElementById("product-gallery-files").value = "";
+    document.getElementById("product-gallery-files").disabled = true;
+    document.getElementById("gallery-upload-btn").disabled = true;
   }
 }
 
@@ -2228,21 +2235,42 @@ document.getElementById("product-form").addEventListener("submit",async e=>{
   setButtonLoading(btn,true,"در حال ذخیره...");
 
   try{
-    const result = id
-      ? await sb.from("products").update(payload).eq("id",id)
-      : await sb.from("products").insert({...payload,stock:0});
+    let savedProductId = id;
 
-    if(result.error)throw result.error;
-
-    document.getElementById("product-modal").classList.remove("show");
-
-    showAlert(
-      document.getElementById("products-alert"),
-      "محصول ذخیره شد.",
-      "success"
-    );
+    if(id){
+      const result = await sb.from("products").update(payload).eq("id",id);
+      if(result.error)throw result.error;
+    }else{
+      const {data,error} = await sb.from("products")
+        .insert({...payload,stock:0})
+        .select("id")
+        .single();
+      if(error)throw error;
+      savedProductId = data.id;
+      document.getElementById("product-id").value = String(savedProductId);
+    }
 
     await loadProducts();
+
+    if(!id){
+      document.getElementById("variant-manager").style.display = "block";
+      document.getElementById("product-gallery-files").disabled = false;
+      document.getElementById("gallery-upload-btn").disabled = false;
+      await loadVariantManager(savedProductId);
+      await loadProductImages(savedProductId);
+      showAlert(
+        alertEl,
+        "محصول ذخیره شد. حالا می‌توانی تصاویرش را همین‌جا بارگذاری کنی.",
+        "success"
+      );
+    }else{
+      document.getElementById("product-modal").classList.remove("show");
+      showAlert(
+        document.getElementById("products-alert"),
+        "محصول ذخیره شد.",
+        "success"
+      );
+    }
 
   }catch(error){
     console.error("Save product error:",error);

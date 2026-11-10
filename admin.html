@@ -2177,21 +2177,80 @@ window.toggleProduct = async(id,newStatus)=>{
 };
 
 window.deleteProduct = async id=>{
-  if(!confirm("آیا از حذف این محصول مطمئن هستید؟"))return;
+  if(!confirm("محصول حذف شود؟ اگر سابقه سفارش داشته باشد، برای حفظ سوابق فقط غیرفعال خواهد شد."))return;
 
   try{
-    const {error} = await sb
-      .from("products")
-      .delete()
-      .eq("id",id);
+    // سفارش‌های قبلی باید به محصول و رنگ ثبت‌شده‌شان متصل بمانند.
+    const {count:orderCount,error:ordersError} = await sb
+      .from("order_items")
+      .select("id",{count:"exact",head:true})
+      .eq("product_id",id);
 
-    if(error)throw error;
+    if(ordersError)throw ordersError;
 
-    showAlert(
-      document.getElementById("products-alert"),
-      "محصول حذف شد.",
-      "success"
-    );
+    if(orderCount > 0){
+      const {error:updateError} = await sb
+        .from("products")
+        .update({is_active:false})
+        .eq("id",id);
+
+      if(updateError)throw updateError;
+
+      showAlert(
+        document.getElementById("products-alert"),
+        "این محصول سابقه سفارش دارد؛ برای حفظ تاریخچه فروش غیرفعال شد.",
+        "success"
+      );
+    }else{
+      // ابتدا مسیر تصاویر را نگه می‌داریم تا بعد از حذف رکوردها، فایل‌ها هم پاک شوند.
+      const {data:images,error:imagesError} = await sb
+        .from("product_images")
+        .select("image_url")
+        .eq("product_id",id);
+
+      if(imagesError)throw imagesError;
+
+      const {error:deleteImagesError} = await sb
+        .from("product_images")
+        .delete()
+        .eq("product_id",id);
+
+      if(deleteImagesError)throw deleteImagesError;
+
+      const {error:deleteVariantsError} = await sb
+        .from("product_variants")
+        .delete()
+        .eq("product_id",id);
+
+      if(deleteVariantsError)throw deleteVariantsError;
+
+      const {error:deleteProductError} = await sb
+        .from("products")
+        .delete()
+        .eq("id",id);
+
+      if(deleteProductError)throw deleteProductError;
+
+      const storagePaths = [...new Set(
+        (images || [])
+          .map(item=>getProductImageStoragePath(item.image_url))
+          .filter(Boolean)
+      )];
+
+      if(storagePaths.length){
+        const {error:storageError} = await sb.storage
+          .from("product-images")
+          .remove(storagePaths);
+
+        if(storageError)console.warn("Product image storage cleanup failed:",storageError);
+      }
+
+      showAlert(
+        document.getElementById("products-alert"),
+        "محصول و تصاویر و تنوع‌های وابسته حذف شدند.",
+        "success"
+      );
+    }
 
     await loadProducts();
 

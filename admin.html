@@ -333,6 +333,38 @@ tr:hover td{background:#fffaf1}
 .variant-add{display:grid;grid-template-columns:1fr 110px auto;gap:8px;align-items:end;margin-top:12px}
 .variant-add .btn{white-space:nowrap}
 .variant-help{font-size:12px;color:var(--muted);margin:5px 0}
+
+.image-manager{
+  margin:18px 0 8px;
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fffaf1;
+}
+.image-manager h4{margin:0 0 6px;font-size:15px}
+.image-upload-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(150px,200px) auto;
+  gap:9px;
+  align-items:end;
+  margin:12px 0;
+}
+.image-upload-row input[type=file]{padding:8px;background:#fff}
+.image-upload-row .btn{white-space:nowrap}
+.image-count{font-size:12px;color:var(--muted);margin:7px 0}
+.image-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-top:12px}
+.image-card{border:1px solid var(--border);border-radius:11px;padding:9px;background:#fff}
+.image-card img{width:100%;height:130px;object-fit:cover;border-radius:8px;background:#eee3d5}
+.image-card-title{font-size:12px;font-weight:bold;margin:6px 0}
+.image-card-controls{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.image-card-controls input{padding:7px;min-width:0}
+.image-card-controls .btn{font-size:11px;padding:7px 5px}
+.image-card .btn-danger{grid-column:1/-1}
+.image-primary{font-size:11px;color:var(--green);font-weight:bold}
+@media(max-width:520px){
+  .image-upload-row{grid-template-columns:1fr}
+  .image-upload-row .btn{width:100%}
+}
 @media(max-width:520px){
   .variant-row{grid-template-columns:1fr 80px;gap:7px}
   .variant-row .variant-save{grid-column:1/-1;width:100%}
@@ -576,6 +608,26 @@ tr:hover td{background:#fffaf1}
         <input type="url" id="product-image" placeholder="https://...">
       </div>
 
+      <section class="image-manager" id="product-image-manager" style="display:none">
+        <h4>گالری تصاویر محصول</h4>
+        <p class="variant-help">حداکثر ۶ تصویر برای هر محصول؛ تصویر عمومی را به‌عنوان تصویر اصلی انتخاب کن و تصاویر دیگر را به رنگ مربوط اختصاص بده.</p>
+        <div class="image-upload-row">
+          <div>
+            <label for="product-gallery-files">انتخاب تصاویر (JPG، PNG، WEBP)</label>
+            <input type="file" id="product-gallery-files" accept="image/jpeg,image/png,image/webp" multiple>
+          </div>
+          <div>
+            <label for="gallery-variant-select">اختصاص تصاویر به</label>
+            <select id="gallery-variant-select">
+              <option value="">تصویر عمومی محصول</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline" id="gallery-upload-btn">آپلود تصاویر</button>
+        </div>
+        <div class="image-count" id="gallery-image-count">۰ از ۶ تصویر</div>
+        <div id="gallery-image-list"><div class="variant-help">برای مشاهده تصاویر، محصول را باز کن.</div></div>
+      </section>
+
       <section class="variant-manager" id="variant-manager" style="display:none">
         <h4>رنگ‌بندی و موجودی هر رنگ</h4>
         <p class="variant-help">موجودی هر رنگ مستقل است. غیرفعال‌کردن رنگ، موجودی آن را حفظ می‌کند.</p>
@@ -668,6 +720,7 @@ let categoriesCache = [];
 let productsCache = [];
 let colorsCache = [];
 let productVariantsCache = [];
+let productImagesCache = [];
 
 let ordersLoading = false;
 let productsLoading = false;
@@ -1624,6 +1677,16 @@ async function loadVariantManager(productId){
     colorsCache = colorResult.data || [];
     productVariantsCache = variantResult.data || [];
 
+    const galleryVariantSelect = document.getElementById("gallery-variant-select");
+    if(galleryVariantSelect){
+      galleryVariantSelect.innerHTML =
+        '<option value="">تصویر عمومی محصول</option>' +
+        productVariantsCache.map(v=>{
+          const colorName = v.colors?.name || ("رنگ " + v.color_id);
+          return '<option value="' + escapeAttr(v.id) + '">' + escapeHtml(colorName) + '</option>';
+        }).join("");
+    }
+
     const assigned = new Set(productVariantsCache.map(v=>String(v.color_id)));
     const available = colorsCache.filter(c=>!assigned.has(String(c.id)));
 
@@ -1666,6 +1729,287 @@ function renderProductVariants(){
     `;
   }).join("");
 }
+
+function renderProductImages(){
+  const list = document.getElementById("gallery-image-list");
+  const count = document.getElementById("gallery-image-count");
+  const total = productImagesCache.length;
+  count.textContent = faNum(total) + " از ۶ تصویر";
+
+  if(!total){
+    list.innerHTML = '<div class="variant-help">هنوز تصویری برای این محصول بارگذاری نشده است.</div>';
+    return;
+  }
+
+  list.innerHTML = '<div class="image-grid">' + productImagesCache.map(img=>{
+    const variant = productVariantsCache.find(v=>String(v.id)===String(img.variant_id));
+    const colorName = img.variant_id
+      ? (variant?.colors?.name || "رنگ اختصاصی")
+      : "تصویر عمومی";
+    return `
+      <article class="image-card">
+        <img src="${escapeAttr(img.image_url)}" alt="" loading="lazy">
+        <div class="image-card-title">${escapeHtml(colorName)}</div>
+        ${img.is_primary ? '<div class="image-primary">★ تصویر اصلی محصول</div>' : ''}
+        <div class="image-card-controls">
+          <div>
+            <label>ترتیب</label>
+            <input type="number" min="0" step="1" value="${Number(img.sort_order)||0}" data-image-sort>
+          </div>
+          <button type="button" class="btn btn-outline" onclick="saveProductImageOrder(${Number(img.id)},this)">ذخیره ترتیب</button>
+          ${img.variant_id===null ? `<button type="button" class="btn btn-outline" onclick="setProductPrimaryImage(${Number(img.id)})">${img.is_primary ? 'تصویر اصلی' : 'انتخاب تصویر اصلی'}</button>` : ''}
+          <button type="button" class="btn btn-danger" onclick="deleteProductImage(${Number(img.id)})">حذف تصویر</button>
+        </div>
+      </article>
+    `;
+  }).join("") + '</div>';
+}
+
+async function loadProductImages(productId){
+  const list = document.getElementById("gallery-image-list");
+  list.innerHTML = '<div class="variant-help">در حال دریافت تصاویر...</div>';
+
+  try{
+    const {data,error} = await sb.from("product_images")
+      .select("id,product_id,variant_id,image_url,sort_order,is_primary,created_at")
+      .eq("product_id",productId)
+      .order("sort_order",{ascending:true})
+      .order("id",{ascending:true});
+
+    if(error)throw error;
+    productImagesCache = data || [];
+    renderProductImages();
+
+    const filesInput = document.getElementById("product-gallery-files");
+    const uploadButton = document.getElementById("gallery-upload-btn");
+    const full = productImagesCache.length >= 6;
+    filesInput.disabled = full;
+    uploadButton.disabled = full;
+  }catch(error){
+    console.error("Load product images error:",error);
+    list.innerHTML = '<div class="variant-help">خطا در دریافت تصاویر: ' + escapeHtml(error.message || "نامشخص") + '</div>';
+  }
+}
+
+function getProductImageStoragePath(imageUrl){
+  try{
+    const pathname = new URL(imageUrl).pathname;
+    const marker = "/storage/v1/object/public/product-images/";
+    const index = pathname.indexOf(marker);
+    if(index < 0)return null;
+    return pathname.slice(index + marker.length).split("/").map(part=>decodeURIComponent(part)).join("/");
+  }catch(_){
+    return null;
+  }
+}
+
+document.getElementById("gallery-upload-btn").addEventListener("click",async()=>{
+  const productId = document.getElementById("product-id").value;
+  const input = document.getElementById("product-gallery-files");
+  const button = document.getElementById("gallery-upload-btn");
+  const alertEl = document.getElementById("product-modal-alert");
+  const files = Array.from(input.files || []);
+  const variantValue = document.getElementById("gallery-variant-select").value;
+  const variantId = variantValue ? Number(variantValue) : null;
+
+  if(!productId){
+    showAlert(alertEl,"ابتدا محصول را ذخیره کن و سپس تصاویر را اضافه کن.");
+    return;
+  }
+  if(!files.length){
+    showAlert(alertEl,"ابتدا حداقل یک تصویر انتخاب کن.");
+    return;
+  }
+  if(productImagesCache.length + files.length > 6){
+    showAlert(alertEl,"هر محصول حداکثر ۶ تصویر می‌تواند داشته باشد. اکنون فقط " + (6-productImagesCache.length) + " تصویر دیگر جا دارد.");
+    return;
+  }
+
+  const allowed = ["image/jpeg","image/png","image/webp"];
+  for(const file of files){
+    if(!allowed.includes(file.type)){
+      showAlert(alertEl,"فرمت فایل " + file.name + " مجاز نیست. فقط JPG، PNG و WEBP پذیرفته می‌شوند.");
+      return;
+    }
+    if(file.size > 5 * 1024 * 1024){
+      showAlert(alertEl,"حجم هر تصویر نباید بیشتر از ۵ مگابایت باشد: " + file.name);
+      return;
+    }
+  }
+
+  button.disabled = true;
+  button.textContent = "در حال آپلود...";
+  let uploadedCount = 0;
+
+  try{
+    for(const file of files){
+      const extension = file.type==="image/jpeg" ? "jpg" : file.type==="image/png" ? "png" : "webp";
+      const storagePath = productId + "/" + crypto.randomUUID() + "." + extension;
+      const {error:uploadError} = await sb.storage.from("product-images").upload(storagePath,file,{
+        cacheControl:"31536000",
+        contentType:file.type,
+        upsert:false
+      });
+      if(uploadError)throw uploadError;
+
+      const {data:publicData} = sb.storage.from("product-images").getPublicUrl(storagePath);
+      const imageUrl = publicData.publicUrl;
+      const shouldBePrimary = variantId===null &&
+        !productImagesCache.some(img=>img.is_primary);
+
+      const {error:insertError} = await sb.from("product_images").insert({
+        product_id:Number(productId),
+        variant_id:variantId,
+        image_url:imageUrl,
+        sort_order:productImagesCache.length,
+        is_primary:shouldBePrimary
+      });
+
+      if(insertError){
+        await sb.storage.from("product-images").remove([storagePath]);
+        throw insertError;
+      }
+
+      if(shouldBePrimary){
+        const {error:productUpdateError} = await sb.from("products")
+          .update({image_url:imageUrl})
+          .eq("id",productId);
+        if(productUpdateError)throw productUpdateError;
+        document.getElementById("product-image").value = imageUrl;
+      }
+      uploadedCount++;
+      productImagesCache.push({
+        product_id:Number(productId),
+        variant_id:variantId,
+        image_url:imageUrl,
+        sort_order:productImagesCache.length,
+        is_primary:shouldBePrimary
+      });
+    }
+
+    input.value = "";
+    await loadProductImages(productId);
+    showAlert(alertEl,uploadedCount + " تصویر با موفقیت بارگذاری شد.","success");
+  }catch(error){
+    console.error("Upload product images error:",error);
+    await loadProductImages(productId);
+    showAlert(alertEl,"آپلود تصاویر کامل نشد: " + (error.message || "خطای نامشخص"));
+  }finally{
+    button.disabled = productImagesCache.length >= 6;
+    button.textContent = "آپلود تصاویر";
+  }
+});
+
+window.saveProductImageOrder = async(imageId,button)=>{
+  const card = button.closest(".image-card");
+  const input = card?.querySelector("[data-image-sort]");
+  const sortOrder = Number(input?.value);
+  if(!Number.isInteger(sortOrder) || sortOrder<0){
+    showAlert(document.getElementById("product-modal-alert"),"ترتیب باید عدد صحیح و غیرمنفی باشد.");
+    return;
+  }
+  button.disabled = true;
+  try{
+    const {error} = await sb.from("product_images")
+      .update({sort_order:sortOrder})
+      .eq("id",imageId)
+      .eq("product_id",document.getElementById("product-id").value);
+    if(error)throw error;
+    await loadProductImages(document.getElementById("product-id").value);
+    showAlert(document.getElementById("product-modal-alert"),"ترتیب تصویر ذخیره شد.","success");
+  }catch(error){
+    showAlert(document.getElementById("product-modal-alert"),"ذخیره ترتیب ناموفق بود: " + (error.message || "نامشخص"));
+  }finally{
+    button.disabled = false;
+  }
+};
+
+window.setProductPrimaryImage = async imageId=>{
+  const productId = document.getElementById("product-id").value;
+  const image = productImagesCache.find(item=>String(item.id)===String(imageId));
+  if(!image || image.variant_id!==null)return;
+
+  try{
+    const {error:clearError} = await sb.from("product_images")
+      .update({is_primary:false})
+      .eq("product_id",productId);
+    if(clearError)throw clearError;
+
+    const {error:setError} = await sb.from("product_images")
+      .update({is_primary:true})
+      .eq("id",imageId)
+      .eq("product_id",productId);
+    if(setError)throw setError;
+
+    const {error:productError} = await sb.from("products")
+      .update({image_url:image.image_url})
+      .eq("id",productId);
+    if(productError)throw productError;
+
+    document.getElementById("product-image").value = image.image_url;
+    await loadProductImages(productId);
+    showAlert(document.getElementById("product-modal-alert"),"تصویر اصلی محصول تغییر کرد.","success");
+  }catch(error){
+    console.error("Set primary product image error:",error);
+    showAlert(document.getElementById("product-modal-alert"),"تغییر تصویر اصلی انجام نشد: " + (error.message || "نامشخص"));
+    await loadProductImages(productId);
+  }
+};
+
+window.deleteProductImage = async imageId=>{
+  const productId = document.getElementById("product-id").value;
+  const image = productImagesCache.find(item=>String(item.id)===String(imageId));
+  if(!image)return;
+  if(!confirm("این تصویر از گالری محصول حذف شود؟"))return;
+
+  try{
+    const {error:deleteError} = await sb.from("product_images")
+      .delete()
+      .eq("id",imageId)
+      .eq("product_id",productId);
+    if(deleteError)throw deleteError;
+
+    const remaining = productImagesCache
+      .filter(item=>String(item.id)!==String(imageId))
+      .sort((a,b)=>Number(a.sort_order)-Number(b.sort_order));
+    let nextPrimary = null;
+
+    if(image.is_primary){
+      nextPrimary = remaining.find(item=>item.variant_id===null) || null;
+      if(nextPrimary){
+        const {error:primaryError} = await sb.from("product_images")
+          .update({is_primary:true})
+          .eq("id",nextPrimary.id)
+          .eq("product_id",productId);
+        if(primaryError)throw primaryError;
+      }
+      const {error:productError} = await sb.from("products")
+        .update({image_url:nextPrimary ? nextPrimary.image_url : null})
+        .eq("id",productId);
+      if(productError)throw productError;
+      document.getElementById("product-image").value = nextPrimary ? nextPrimary.image_url : "";
+    }
+
+    const storagePath = getProductImageStoragePath(image.image_url);
+    if(storagePath){
+      const {error:storageError} = await sb.storage.from("product-images").remove([storagePath]);
+      if(storageError)console.warn("Storage image cleanup failed:",storageError);
+    }
+
+    await loadProductImages(productId);
+    showAlert(
+      document.getElementById("product-modal-alert"),
+      image.is_primary && !nextPrimary
+        ? "تصویر حذف شد؛ اکنون تصویر اصلی خالی است."
+        : "تصویر از گالری حذف شد.",
+      "success"
+    );
+  }catch(error){
+    console.error("Delete product image error:",error);
+    showAlert(document.getElementById("product-modal-alert"),"حذف تصویر کامل نشد: " + (error.message || "نامشخص"));
+    await loadProductImages(productId);
+  }
+};
 
 window.saveProductVariant = async variantId=>{
   const row = document.querySelector('.variant-row[data-variant-id="'+variantId+'"]');
@@ -1765,11 +2109,18 @@ async function openProductModal(edit=null){
 
   const variantSection = document.getElementById("variant-manager");
   variantSection.style.display = edit ? "block" : "none";
+  const imageSection = document.getElementById("product-image-manager");
+  imageSection.style.display = edit ? "block" : "none";
+
   if(edit){
     await loadVariantManager(edit.id);
+    await loadProductImages(edit.id);
   }else{
     productVariantsCache = [];
+    productImagesCache = [];
     document.getElementById("variant-list").innerHTML = "";
+    document.getElementById("gallery-image-list").innerHTML = "";
+    document.getElementById("gallery-image-count").textContent = "۰ از ۶ تصویر";
   }
 }
 

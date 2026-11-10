@@ -630,7 +630,12 @@
     .detail-dialog{width:min(560px,100%);max-height:88vh;overflow-y:auto;background:var(--paper);border:1px solid var(--gold-light);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
     .detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .detail-head h2{margin:0;font-size:19px}
-    .detail-image{width:100%;height:240px;object-fit:contain;background:#f1e8dc;border-radius:15px;display:block;margin-bottom:14px}
+    .detail-gallery{position:relative;background:#f1e8dc;border-radius:15px;overflow:hidden;margin-bottom:14px;touch-action:pan-y}
+    .detail-image{width:100%;height:300px;object-fit:contain;display:block}
+    .gallery-nav{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border:1px solid #d8c4a3;background:#fffdf0e8;color:var(--brown);border-radius:50%;font-size:23px;display:grid;place-items:center;z-index:2}
+    .gallery-prev{right:10px}.gallery-next{left:10px}
+    .gallery-counter{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:#30251ec9;color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;direction:ltr}
+    .gallery-empty{height:220px;display:grid;place-items:center;color:var(--muted);font-size:13px}
     .detail-description{color:var(--muted);font-size:12px;line-height:2;margin:0 0 12px}
     .detail-colors{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
     .color-option{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 11px;color:var(--ink);font-size:12px}
@@ -639,7 +644,7 @@
     .detail-stock{color:var(--muted);font-size:12px;min-height:22px;margin:8px 0 14px}
     .detail-add{width:100%;border:1px solid #c9a66e;border-radius:12px;background:linear-gradient(135deg,#947052,#563a2b);color:#fff;padding:13px;font-weight:700}
     .detail-add:disabled{opacity:.45;cursor:not-allowed}
-    @media(max-width:480px){.detail-dialog{padding:15px}.detail-image{height:190px}}
+    @media(max-width:480px){.detail-dialog{padding:15px}.detail-image{height:220px}.gallery-empty{height:190px}}
 
     /* سبد خرید */  
     .overlay {  
@@ -1254,7 +1259,13 @@
         <h2 id="detailTitle">جزئیات محصول</h2>
         <button class="close" type="button" data-close="detailOverlay">بستن</button>
       </div>
-      <img class="detail-image" id="detailImage" alt="">
+      <div class="detail-gallery" id="detailGallery">
+        <img class="detail-image" id="detailImage" alt="" style="display:none">
+        <div class="gallery-empty" id="detailGalleryEmpty">تصویری برای نمایش ثبت نشده است.</div>
+        <button class="gallery-nav gallery-prev" id="galleryPrev" type="button" aria-label="تصویر قبلی" style="display:none">‹</button>
+        <button class="gallery-nav gallery-next" id="galleryNext" type="button" aria-label="تصویر بعدی" style="display:none">›</button>
+        <span class="gallery-counter" id="galleryCounter" style="display:none"></span>
+      </div>
       <p class="detail-description" id="detailDescription"></p>
       <strong>رنگ موردنظر را انتخاب کن:</strong>
       <div class="detail-colors" id="detailColors"></div>
@@ -1329,6 +1340,10 @@
     let products = [];
     let categories = [];
     let variants = [];
+    let productImages = [];
+    let selectedGalleryImages = [];
+    let selectedGalleryIndex = 0;
+    let galleryTouchStartX = null;
     let cart = safeGet('km_cart', '{}');
     let active = 'همه';
     let selectedProduct = null;
@@ -1391,6 +1406,24 @@
       });  
     }  
   
+    function getProductImages(productId, variantId = null) {
+      const all = productImages
+        .filter(img => Number(img.product_id) === Number(productId))
+        .sort((a,b) => Number(a.sort_order)-Number(b.sort_order) || Number(a.id)-Number(b.id));
+      if (variantId !== null) {
+        const colorImages = all.filter(img => Number(img.variant_id) === Number(variantId));
+        if (colorImages.length) return colorImages;
+      }
+      const generalImages = all.filter(img => img.variant_id === null);
+      return generalImages.length ? generalImages : all;
+    }
+
+    function getProductCardImage(productId) {
+      const images = getProductImages(productId);
+      const primary = images.find(img => img.is_primary && img.variant_id === null);
+      return primary?.image_url || images[0]?.image_url || '';
+    }
+
     function renderProducts() {  
       const query = document  
         .getElementById('search')  
@@ -1428,16 +1461,17 @@
           )?.name ||  
           'کیف زنانه';  
   
-        const image = product.image_url  
-          ? `  
-            <img  
-              src="${esc(product.image_url)}"  
-              alt="${esc(product.name)}"  
-              loading="lazy"  
-              onerror="this.style.display='none'"  
-            >  
-          `  
-          : `<div class="bagshape tone1"></div>`;  
+        const cardImage = getProductCardImage(product.id);
+        const image = cardImage
+          ? `
+            <img
+              src="${esc(cardImage)}"
+              alt="${esc(product.name)}"
+              loading="lazy"
+              onerror="this.style.display='none'"
+            >
+          `
+          : `<div class="bagshape tone1"></div>`;
   
         return `  
           <article class="product">  
@@ -1471,17 +1505,53 @@
         v.is_active === true && v.colors && v.colors.is_active === true);
     }
 
+    function renderDetailGallery(images) {
+      selectedGalleryImages = images || [];
+      selectedGalleryIndex = Math.min(selectedGalleryIndex, Math.max(0, selectedGalleryImages.length - 1));
+      const img = document.getElementById('detailImage');
+      const empty = document.getElementById('detailGalleryEmpty');
+      const previous = document.getElementById('galleryPrev');
+      const next = document.getElementById('galleryNext');
+      const counter = document.getElementById('galleryCounter');
+
+      if (!selectedGalleryImages.length) {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        empty.style.display = 'grid';
+        previous.style.display = 'none';
+        next.style.display = 'none';
+        counter.style.display = 'none';
+        return;
+      }
+
+      const current = selectedGalleryImages[selectedGalleryIndex];
+      img.src = current.image_url;
+      img.alt = selectedProduct?.name || 'تصویر محصول';
+      img.style.display = 'block';
+      empty.style.display = 'none';
+      const multiple = selectedGalleryImages.length > 1;
+      previous.style.display = multiple ? 'grid' : 'none';
+      next.style.display = multiple ? 'grid' : 'none';
+      counter.style.display = multiple ? 'block' : 'none';
+      counter.textContent = (selectedGalleryIndex + 1).toLocaleString('fa-IR') +
+        ' / ' + selectedGalleryImages.length.toLocaleString('fa-IR');
+    }
+
+    function moveGallery(direction) {
+      if (selectedGalleryImages.length < 2) return;
+      selectedGalleryIndex = (selectedGalleryIndex + direction + selectedGalleryImages.length) % selectedGalleryImages.length;
+      renderDetailGallery(selectedGalleryImages);
+    }
+
     function openProductDetails(id) {
       const product = getProduct(id);
       if (!product) return toast('محصول پیدا نشد');
       selectedProduct = product;
       selectedVariant = null;
+      selectedGalleryIndex = 0;
       document.getElementById('detailTitle').textContent = product.name;
       document.getElementById('detailDescription').textContent = product.description || 'انتخابی از کیف مارکت';
-      const img = document.getElementById('detailImage');
-      img.src = product.image_url || '';
-      img.alt = product.name;
-      img.style.display = product.image_url ? 'block' : 'none';
+      renderDetailGallery(getProductImages(product.id));
       renderDetailColors();
       document.getElementById('detailOverlay').classList.add('show');
       document.body.style.overflow = 'hidden';
@@ -1508,6 +1578,8 @@
       box.querySelectorAll('.color-option').forEach(button => {
         button.addEventListener('click', () => {
           selectedVariant = available.find(v => Number(v.id) === Number(button.dataset.variantId)) || null;
+          selectedGalleryIndex = 0;
+          renderDetailGallery(getProductImages(selectedProduct.id, selectedVariant.id));
           renderDetailColors();
         });
       });
@@ -1600,14 +1672,17 @@
           SUPABASE_ANON_KEY  
         );  
   
-        const [categoryResult, productResult, variantResult] = await Promise.all([
+        const [categoryResult, productResult, variantResult, imageResult] = await Promise.all([
           db.from('categories').select('id,name').eq('is_active', true).order('name'),
           db.from('products').select(`
-            id, name, description, price, image_url, is_active, category_id, categories(name)
+            id, name, description, price, is_active, category_id, categories(name)
           `).eq('is_active', true).order('created_at', { ascending: false }),
           db.from('product_variants')
             .select('id,product_id,color_id,stock,is_active,colors(id,name,hex_code,is_active)')
-            .eq('is_active', true)
+            .eq('is_active', true),
+          db.from('product_images')
+            .select('id,product_id,variant_id,image_url,sort_order,is_primary')
+            .order('sort_order', { ascending: true })
         ]);  
   
         if (categoryResult.error) {  
@@ -1625,10 +1700,14 @@
         if (variantResult.error) {
           throw new Error('دریافت رنگ‌ها و موجودی: ' + variantResult.error.message);
         }
+        if (imageResult.error) {
+          throw new Error('دریافت تصاویر محصولات: ' + imageResult.error.message);
+        }
 
         categories = categoryResult.data || [];
         products = productResult.data || [];
-        variants = (variantResult.data || []).filter(v => v.colors && v.colors.is_active === true);  
+        variants = (variantResult.data || []).filter(v => v.colors && v.colors.is_active === true);
+        productImages = imageResult.data || [];  
   
         renderCategories();  
         renderProducts();  
@@ -1682,6 +1761,19 @@
       document.getElementById('detailAdd').onclick = () => {
         if (selectedVariant && Number(selectedVariant.stock) > 0) addToCart(selectedVariant);
       };
+
+      document.getElementById('galleryPrev').onclick = () => moveGallery(-1);
+      document.getElementById('galleryNext').onclick = () => moveGallery(1);
+      const gallery = document.getElementById('detailGallery');
+      gallery.addEventListener('touchstart', event => {
+        galleryTouchStartX = event.changedTouches[0]?.clientX ?? null;
+      }, {passive:true});
+      gallery.addEventListener('touchend', event => {
+        if (galleryTouchStartX === null || selectedGalleryImages.length < 2) return;
+        const delta = event.changedTouches[0].clientX - galleryTouchStartX;
+        if (Math.abs(delta) > 40) moveGallery(delta > 0 ? -1 : 1);
+        galleryTouchStartX = null;
+      }, {passive:true});
 
       document.getElementById('detailOverlay').addEventListener('click', event => {
         if (event.target.id === 'detailOverlay') {

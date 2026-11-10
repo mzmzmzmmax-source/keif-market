@@ -730,7 +730,7 @@
 
       const name = document.createElement("strong");
       name.textContent =
-        product.name + " × " +
+        product.name + " — " + product.variant_name + " × " +
         product.quantity.toLocaleString("fa-IR");
 
       const unitPrice = document.createElement("small");
@@ -800,95 +800,75 @@
         throw new Error("ساختار سبد خرید معتبر نیست.");
       }
 
-      const entries = Object.entries(cart).filter(([id, qty]) =>
-        /^\d+$/.test(String(id)) &&
-        Number.isInteger(Number(qty)) &&
-        Number(qty) > 0 &&
-        Number(qty) <= 99
-      );
+      const entries = Object.entries(cart)
+        .map(([key, item]) => ({ key, item }))
+        .filter(({ key, item }) =>
+          /^v[1-9][0-9]*$/.test(key) && item &&
+          Number.isInteger(Number(item.product_id)) &&
+          Number.isInteger(Number(item.variant_id)) &&
+          Number.isInteger(Number(item.quantity)) &&
+          Number(item.quantity) > 0 && Number(item.quantity) <= 99
+        );
 
       if (!entries.length) {
-        cartItemsElement.textContent =
-          "سبد خرید شما خالی است. ابتدا محصولی انتخاب کن.";
+        cartItemsElement.textContent = "سبد خرید شما خالی است یا رنگی برای محصولات انتخاب نشده است.";
         totalElement.textContent = formatPrice(0);
         submitButton.disabled = true;
         retryButton.style.display = "none";
         return;
       }
 
-      const ids = entries.map(([id]) => Number(id));
-
-      // دریافت محصولات با محدودیت زمانی
-      setLoading("در حال دریافت اطلاعات محصولات...");
+      const productIds = [...new Set(entries.map(({ item }) => Number(item.product_id)))];
+      const variantIds = entries.map(({ item }) => Number(item.variant_id));
+      setLoading("در حال دریافت اطلاعات محصولات و رنگ‌ها...");
 
       let timeoutId;
-
-      const request = supabaseClient
-        .from("products")
-        .select("id,name,price,stock,is_active")
-        .in("id", ids);
-
+      const request = Promise.all([
+        supabaseClient.from("products").select("id,name,price,is_active").in("id", productIds),
+        supabaseClient.from("product_variants")
+          .select("id,product_id,stock,is_active,colors(name,is_active)")
+          .in("id", variantIds)
+      ]);
       const timeout = new Promise((resolve, reject) => {
-        timeoutId = setTimeout(() => {
-          reject(
-            new Error(
-              "پاسخی از سرور دریافت نشد. اتصال اینترنت را بررسی کن و دوباره تلاش کن."
-            )
-          );
-        }, 15000);
+        timeoutId = setTimeout(() => reject(new Error("پاسخی از سرور دریافت نشد. اتصال اینترنت را بررسی کن و دوباره تلاش کن.")), 15000);
       });
 
-      let result;
-
+      let results;
       try {
-        result = await Promise.race([request, timeout]);
+        results = await Promise.race([request, timeout]);
       } finally {
         clearTimeout(timeoutId);
       }
 
-      if (result.error) {
-        throw new Error(
-          "خطا در دریافت محصولات: " + result.error.message
-        );
-      }
+      const [productResult, variantResult] = results;
+      if (productResult.error) throw new Error("خطا در دریافت محصولات: " + productResult.error.message);
+      if (variantResult.error) throw new Error("خطا در دریافت رنگ‌ها: " + variantResult.error.message);
 
-      const productMap = new Map(
-        (result.data || []).map(product => [
-          String(product.id),
-          product
-        ])
-      );
+      const productMap = new Map((productResult.data || []).map(p => [String(p.id), p]));
+      const variantMap = new Map((variantResult.data || []).map(v => [String(v.id), v]));
 
-      productsInCart = entries.map(([id, quantity]) => {
-        const product = productMap.get(String(id));
-
-        if (!product || !product.is_active) {
-          throw new Error(
-            "یکی از محصولات سبد خرید دیگر فعال یا موجود نیست."
-          );
+      productsInCart = entries.map(({ item }) => {
+        const product = productMap.get(String(item.product_id));
+        const variant = variantMap.get(String(item.variant_id));
+        if (!product || product.is_active !== true || !variant || variant.is_active !== true ||
+            !variant.colors || variant.colors.is_active !== true ||
+            Number(variant.product_id) !== Number(item.product_id)) {
+          throw new Error("یکی از محصولات یا رنگ‌های سبد خرید دیگر فعال نیست.");
         }
-
-        if (
-          !Number.isFinite(Number(product.price)) ||
-          Number(product.price) < 0
-        ) {
-          throw new Error(
-            "قیمت یکی از محصولات معتبر نیست."
-          );
+        if (!Number.isFinite(Number(product.price)) || Number(product.price) < 0) {
+          throw new Error("قیمت یکی از محصولات معتبر نیست.");
         }
-
-        if (Number(quantity) > Number(product.stock)) {
-          throw new Error(
-            "تعداد درخواستی یکی از محصولات بیشتر از موجودی فروشگاه است."
-          );
+        if (Number(item.quantity) > Number(variant.stock)) {
+          throw new Error("تعداد درخواستی یکی از رنگ‌ها بیشتر از موجودی فروشگاه است.");
         }
-
         return {
-          product_id: Number(product.id),
-          quantity: Number(quantity),
-          name: product.name,
-          price: Number(product.price),
-          stock: Number(product.stock)
+          product_id:Number(product.id),
+          variant_id:Number(variant.id),
+          variant_name:variant.colors.name,
+          quantity:Number(item.quantity),
+          name:product.name,
+          price:Number(product.price),
+          stock:Number(variant.stock)
         };
       });
 
@@ -1008,6 +988,7 @@
               customer,
               items: productsInCart.map(product => ({
                 product_id: product.product_id,
+                variant_id: product.variant_id,
                 quantity: product.quantity
               }))
             }),

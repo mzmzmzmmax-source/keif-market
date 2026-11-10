@@ -1054,6 +1054,8 @@ async function loadOrders(){
         status,
         payment_status,
         created_at,
+        tracking_code,
+        shipped_at,
         order_items(
           id,
           product_name,
@@ -1153,6 +1155,29 @@ async function loadOrders(){
             <div class="price"><b>مبلغ نهایی:</b> ${money(order.total_amount)}</div>
           </div>
 
+          ${order.status!=="cancelled" ? `
+            <div class="shipping-controls" style="margin:12px 0;padding:10px;background:#f8f1e6;border-radius:10px">
+              <label for="tracking-code-${Number(order.id)}">کد رهگیری پستی</label>
+              <input
+                type="text"
+                id="tracking-code-${Number(order.id)}"
+                value="${escapeHtml(order.tracking_code || "")}"
+                maxlength="100"
+                placeholder="کد رهگیری مرسوله را وارد کنید"
+                aria-label="کد رهگیری پستی"
+              >
+              <button
+                class="btn btn-outline btn-sm"
+                onclick="saveOrderTracking(${Number(order.id)})"
+              >
+                ثبت کد و اعلام ارسال
+              </button>
+              ${order.shipped_at ? `<small>تاریخ ارسال: ${formatDate(order.shipped_at)}</small>` : ""}
+            </div>
+          ` : order.tracking_code ? `
+            <div class="order-items"><b>کد رهگیری:</b> ${escapeHtml(order.tracking_code)}</div>
+          ` : ""}
+          
           <div class="order-bottom">
             <div class="order-controls">
               <select
@@ -1222,6 +1247,18 @@ window.updateOrderStatus = async id=>{
 
   if(!Object.prototype.hasOwnProperty.call(orderStatuses,newStatus))return;
 
+  const trackingInput = document.getElementById("tracking-code-" + id);
+  const trackingCode = trackingInput ? trackingInput.value.trim() : "";
+
+  if(newStatus==="shipped" && !trackingCode){
+    showAlert(
+      document.getElementById("orders-alert"),
+      "برای اعلام ارسال سفارش، ابتدا کد رهگیری پستی را وارد کنید."
+    );
+    trackingInput?.focus();
+    return;
+  }
+
   if(
     newStatus==="cancelled" &&
     !confirm("آیا از لغو این سفارش مطمئن هستید؟")
@@ -1240,9 +1277,15 @@ window.updateOrderStatus = async id=>{
   }
 
   try{
+    const updateData = {status:newStatus};
+    if(newStatus==="shipped"){
+      updateData.tracking_code = trackingCode;
+      updateData.shipped_at = new Date().toISOString();
+    }
+
     const {error} = await sb
       .from("orders")
-      .update({status:newStatus})
+      .update(updateData)
       .eq("id",id);
 
     if(error)throw error;
@@ -1275,6 +1318,66 @@ window.updateOrderStatus = async id=>{
   }
 };
 
+window.saveOrderTracking = async id=>{
+  if(orderUpdateInProgress.has(String(id)))return;
+
+  const input = document.getElementById("tracking-code-" + id);
+  if(!input)return;
+
+  const trackingCode = input.value.trim();
+  if(!trackingCode){
+    showAlert(
+      document.getElementById("orders-alert"),
+      "لطفاً کد رهگیری پستی را وارد کنید."
+    );
+    input.focus();
+    return;
+  }
+
+  const button = input.parentElement.querySelector("button");
+  const alertEl = document.getElementById("orders-alert");
+
+  orderUpdateInProgress.add(String(id));
+  if(button){
+    button.disabled = true;
+    button.textContent = "در حال ثبت...";
+  }
+
+  try{
+    const {error} = await sb
+      .from("orders")
+      .update({
+        tracking_code:trackingCode,
+        shipped_at:new Date().toISOString(),
+        status:"shipped"
+      })
+      .eq("id",id);
+
+    if(error)throw error;
+
+    showAlert(
+      alertEl,
+      "کد رهگیری ثبت شد و وضعیت سفارش به «ارسال شده» تغییر کرد.",
+      "success"
+    );
+    await loadOrders();
+
+  }catch(error){
+    console.error("Save order tracking error:",error);
+    showAlert(
+      alertEl,
+      "ثبت کد رهگیری انجام نشد: " + (error.message || "خطای نامشخص")
+    );
+    await loadOrders();
+
+  }finally{
+    orderUpdateInProgress.delete(String(id));
+    if(button){
+      button.disabled = false;
+      button.textContent = "ثبت کد و اعلام ارسال";
+    }
+  }
+};
 window.updateOrderShippingFee = async id=>{
   if(orderUpdateInProgress.has(String(id)))return;
 

@@ -1603,7 +1603,7 @@
         const [categoryResult, productResult, variantResult] = await Promise.all([
           db.from('categories').select('id,name').eq('is_active', true).order('name'),
           db.from('products').select(`
-            id, name, description, price, stock, image_url, is_active, category_id, categories(name)
+            id, name, description, price, image_url, is_active, category_id, categories(name)
           `).eq('is_active', true).order('created_at', { ascending: false }),
           db.from('product_variants')
             .select('id,product_id,color_id,stock,is_active,colors(id,name,hex_code,is_active)')

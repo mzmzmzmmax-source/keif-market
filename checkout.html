@@ -400,6 +400,52 @@
       font-size: 11px;
     }
 
+    .invoice {
+      display: none;
+      background: #fff;
+      color: #30251e;
+      border: 1px solid #e9dfd2;
+      border-radius: 18px;
+      padding: 24px;
+      margin-top: 18px;
+    }
+    .invoice-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: flex-start;
+      border-bottom: 2px solid #79543c;
+      padding-bottom: 15px;
+      margin-bottom: 16px;
+    }
+    .invoice h2 { margin: 0; font-size: 21px; }
+    .invoice small { color: #8c7d70; }
+    .invoice-meta, .invoice-customer {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 15px;
+      margin: 14px 0;
+      font-size: 12px;
+    }
+    .invoice-table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 12px; }
+    .invoice-table th, .invoice-table td { border-bottom: 1px solid #e9dfd2; padding: 9px 6px; text-align: right; }
+    .invoice-total { border-top: 2px solid #79543c; padding-top: 12px; font-weight: 700; display: flex; justify-content: space-between; }
+    .invoice-note { background: #f8f3ec; border-radius: 10px; padding: 10px; font-size: 11px; margin-top: 14px; }
+    .invoice-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .invoice-actions button { border: 0; border-radius: 10px; padding: 10px 16px; background: #79543c; color: white; font-weight: 700; }
+    @media(max-width:480px) {
+      .invoice { padding: 15px; }
+      .invoice-meta, .invoice-customer { grid-template-columns: 1fr; }
+      .invoice-head { flex-direction: column; }
+    }
+    @media print {
+      body * { visibility: hidden !important; }
+      #customerInvoice, #customerInvoice * { visibility: visible !important; }
+      #customerInvoice { display: block !important; position: absolute; inset: 0; width: 100%; margin: 0; border: 0; box-shadow: none; }
+      .invoice-actions { display: none !important; }
+      @page { size: A4; margin: 14mm; }
+    }
+
     @media(max-width: 760px) {
       .layout {
         grid-template-columns: 1fr;
@@ -600,6 +646,12 @@
           </form>
 
           <div id="message" class="message" role="status" aria-live="polite"></div>
+          <section id="customerInvoice" class="invoice" aria-label="فاکتور سفارش">
+            <div id="invoiceContent"></div>
+            <div class="invoice-actions">
+              <button type="button" id="printInvoice">چاپ / ذخیره PDF</button>
+            </div>
+          </section>
 
         </div>
 
@@ -699,6 +751,51 @@
   function hideMessage() {
     messageElement.textContent = "";
     messageElement.className = "message";
+  }
+
+  function escapeInvoice(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[char]));
+  }
+
+  function renderInvoice(orderId, customer, items, amount) {
+    const invoice = document.getElementById("customerInvoice");
+    const content = document.getElementById("invoiceContent");
+    const rows = items.map((item, index) => `
+      <tr>
+        <td>${(index + 1).toLocaleString("fa-IR")}</td>
+        <td>${escapeInvoice(item.name)}</td>
+        <td>${escapeInvoice(item.variant_name)}</td>
+        <td>${item.quantity.toLocaleString("fa-IR")}</td>
+        <td>${formatPrice(item.price * item.quantity)}</td>
+      </tr>
+    `).join("");
+
+    content.innerHTML = `
+      <div class="invoice-head">
+        <div><h2>فاکتور سفارش کیف مارکت</h2><small>از خرید شما سپاسگزاریم</small></div>
+        <div><strong>شماره سفارش: ${escapeInvoice(orderId)}</strong><br><small>تاریخ: ${new Date().toLocaleDateString("fa-IR")}</small></div>
+      </div>
+      <h3>اطلاعات خریدار</h3>
+      <div class="invoice-customer">
+        <div>نام و نام خانوادگی: <strong>${escapeInvoice(customer.customer_first_name)} ${escapeInvoice(customer.customer_last_name)}</strong></div>
+        <div>موبایل مشتری: <strong>${escapeInvoice(customer.customer_phone)}</strong></div>
+        <div>استان و شهر: ${escapeInvoice(customer.province)}، ${escapeInvoice(customer.city)}</div>
+        <div>کد پستی: ${escapeInvoice(customer.postal_code)}</div>
+        <div style="grid-column:1/-1">نشانی: ${escapeInvoice(customer.full_address)}</div>
+      </div>
+      <h3>اقلام سفارش</h3>
+      <table class="invoice-table">
+        <thead><tr><th>ردیف</th><th>محصول</th><th>رنگ</th><th>تعداد</th><th>مبلغ</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="invoice-total"><span>جمع مبلغ کالاها</span><span>${formatPrice(amount)}</span></div>
+      <div class="invoice-note">هزینه ارسال هنوز محاسبه نشده است و پس از بررسی سفارش به اطلاع شما می‌رسد. این فاکتور رسید ثبت سفارش است، نه رسید پرداخت.</div>
+      <div class="invoice-note">شماره تماس فروشگاه: <strong dir="ltr">${escapeInvoice("09913943650")}</strong></div>
+    `;
+    invoice.style.display = "block";
+    document.getElementById("printInvoice").onclick = () => window.print();
   }
 
   function setLoading(text) {
@@ -1015,6 +1112,10 @@
         );
       }
 
+      // حفظ اطلاعات فاکتور پیش از پاک‌سازی سبد خرید
+      const invoiceItems = productsInCart.map(item => ({...item}));
+      const invoiceAmount = totalAmount;
+
       // فقط پس از تأیید موفقیت سرور، سبد خرید پاک می‌شود.
       localStorage.removeItem("km_cart");
 
@@ -1032,6 +1133,7 @@
         "؛ هزینه ارسال و مبلغ نهایی پس از بررسی به شما اعلام می‌شود.",
         "success"
       );
+      renderInvoice(result.order_id, customer, invoiceItems, invoiceAmount);
 
       submitButton.textContent = "سفارش ثبت شد";
       submitButton.disabled = true;

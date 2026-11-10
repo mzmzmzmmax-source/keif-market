@@ -1410,11 +1410,11 @@
       const all = productImages
         .filter(img => Number(img.product_id) === Number(productId))
         .sort((a,b) => Number(a.sort_order)-Number(b.sort_order) || Number(a.id)-Number(b.id));
+      const generalImages = all.filter(img => img.variant_id === null);
       if (variantId !== null) {
         const colorImages = all.filter(img => Number(img.variant_id) === Number(variantId));
-        if (colorImages.length) return colorImages;
+        return colorImages.length ? colorImages : generalImages;
       }
-      const generalImages = all.filter(img => img.variant_id === null);
       return generalImages.length ? generalImages : all;
     }
 

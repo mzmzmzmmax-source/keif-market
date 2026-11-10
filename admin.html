@@ -1855,7 +1855,7 @@ document.getElementById("gallery-upload-btn").addEventListener("click",async()=>
       const {data:publicData} = sb.storage.from("product-images").getPublicUrl(storagePath);
       const imageUrl = publicData.publicUrl;
       const shouldBePrimary = variantId===null &&
-        !productImagesCache.some(img=>img.is_primary);
+        !productImagesCache.some(img=>img.is_primary && img.variant_id===null);
 
       const {error:insertError} = await sb.from("product_images").insert({
         product_id:Number(productId),

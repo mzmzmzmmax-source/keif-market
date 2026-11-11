@@ -1180,9 +1180,14 @@
 
       // فقط پس از تأیید موفقیت سرور، سبد خرید پاک می‌شود.
       localStorage.removeItem("km_cart");
-      const savedPending = JSON.parse(localStorage.getItem(IDEMPOTENCY_STORAGE_KEY) || "null");
-      if (savedPending && savedPending.key === requestIdentity.key) {
-        localStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
+      try {
+        const savedPending = JSON.parse(localStorage.getItem(IDEMPOTENCY_STORAGE_KEY) || "null");
+        if (savedPending && savedPending.key === requestIdentity.key) {
+          localStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
+        }
+      } catch (storageError) {
+        // سفارش در سرور ثبت شده؛ خطای پاک‌سازی شناسه نباید موفقیت را به شکست تبدیل کند.
+        console.warn("Could not clear pending order identity:", storageError);
       }
 
       productsInCart = [];

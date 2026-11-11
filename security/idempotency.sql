@@ -26,9 +26,9 @@ BEGIN
   END IF;
 
   IF payload IS NULL
-     OR pg_catalog.jsonb_typeof(payload) <> 'object'
-     OR pg_catalog.jsonb_typeof(payload -> 'customer') <> 'object'
-     OR pg_catalog.jsonb_typeof(payload -> 'items') <> 'array' THEN
+     OR pg_catalog.jsonb_typeof(payload) IS DISTINCT FROM 'object'
+     OR pg_catalog.jsonb_typeof(payload -> 'customer') IS DISTINCT FROM 'object'
+     OR pg_catalog.jsonb_typeof(payload -> 'items') IS DISTINCT FROM 'array' THEN
     RAISE EXCEPTION 'invalid order payload'
       USING ERRCODE = '22023';
   END IF;

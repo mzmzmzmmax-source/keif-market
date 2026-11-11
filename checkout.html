@@ -743,6 +743,64 @@
       );
   }
 
+
+  // کلید پایدار برای جلوگیری از ثبت دوباره یک درخواست سفارش
+  const IDEMPOTENCY_STORAGE_KEY = "km_pending_order_v1";
+
+  async function createRequestFingerprint(payload) {
+    if (!window.crypto || !window.crypto.subtle) {
+      throw new Error("مرورگر امکان امن‌سازی درخواست سفارش را ندارد. لطفاً مرورگر را به‌روز کن.");
+    }
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest))
+      .map(byte => byte.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function createIdempotencyUuid() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+    if (!window.crypto || typeof window.crypto.getRandomValues !== "function") {
+      throw new Error("امکان تولید شناسه امن سفارش وجود ندارد.");
+    }
+    const bytes = new Uint8Array(16);
+    window.crypto.getRandomValues(bytes);
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    return hex.slice(0, 8) + "-" + hex.slice(8, 12) + "-" +
+      hex.slice(12, 16) + "-" + hex.slice(16, 20) + "-" + hex.slice(20);
+  }
+
+  async function getPendingOrderIdentity(payload) {
+    const fingerprint = await createRequestFingerprint(payload);
+    let pending = null;
+
+    try {
+      pending = JSON.parse(localStorage.getItem(IDEMPOTENCY_STORAGE_KEY) || "null");
+    } catch {
+      throw new Error("اطلاعات موقت ثبت سفارش قابل خواندن نیست؛ حافظه مرورگر را بررسی کن.");
+    }
+
+    if (
+      pending &&
+      pending.fingerprint === fingerprint &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(pending.key || "")
+    ) {
+      return { key: pending.key, fingerprint };
+    }
+
+    const identity = { key: createIdempotencyUuid(), fingerprint };
+    try {
+      localStorage.setItem(IDEMPOTENCY_STORAGE_KEY, JSON.stringify(identity));
+    } catch {
+      throw new Error("ذخیره امن شناسه موقت سفارش ممکن نیست؛ فضای ذخیره‌سازی مرورگر را بررسی کن.");
+    }
+    return identity;
+  }
+
   function showMessage(text, type) {
     messageElement.textContent = text;
     messageElement.className = "message " + type;
@@ -1064,12 +1122,20 @@
     hideMessage();
 
     try {
+      const payload = {
+        customer,
+        items: productsInCart.map(product => ({
+          product_id: product.product_id,
+          variant_id: product.variant_id,
+          quantity: product.quantity
+        }))
+      };
+
+      // در تلاش مجدد با داده‌های یکسان، همان کلید قبلی استفاده می‌شود.
+      const requestIdentity = await getPendingOrderIdentity(payload);
+
       const controller = new AbortController();
-
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-      }, 25000);
-
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
       let response;
 
       try {
@@ -1079,16 +1145,11 @@
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "apikey": SUPABASE_KEY,
-              "Authorization": "Bearer " + SUPABASE_KEY
+              "apikey": SUPABASE_KEY
             },
             body: JSON.stringify({
-              customer,
-              items: productsInCart.map(product => ({
-                product_id: product.product_id,
-                variant_id: product.variant_id,
-                quantity: product.quantity
-              }))
+              ...payload,
+              idempotency_key: requestIdentity.key
             }),
             signal: controller.signal
           }
@@ -1119,6 +1180,10 @@
 
       // فقط پس از تأیید موفقیت سرور، سبد خرید پاک می‌شود.
       localStorage.removeItem("km_cart");
+      const savedPending = JSON.parse(localStorage.getItem(IDEMPOTENCY_STORAGE_KEY) || "null");
+      if (savedPending && savedPending.key === requestIdentity.key) {
+        localStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
+      }
 
       productsInCart = [];
       orderCompleted = true;

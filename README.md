@@ -1,2 +1,2 @@
-# keif-market
-Keif Market Online Store
+# kif-market
+Kif Market Online Store

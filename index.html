@@ -625,7 +625,7 @@
     }  
   
     /* پنجره جزئیات محصول */
-    .detail-overlay{position:fixed;inset:0;z-index:9998;display:none;align-items:center;justify-content:center;padding:18px;background:#20181199}
+    .detail-overlay{position:fixed;inset:auto;left:var(--visual-viewport-left,0px);top:var(--visual-viewport-top,0px);right:auto;bottom:auto;width:var(--visual-viewport-width,100vw);height:var(--visual-viewport-height,100vh);z-index:9998;display:none;align-items:center;justify-content:center;padding:18px;background:#20181199}
     .detail-overlay.show{display:flex}
     .detail-dialog{width:min(560px,100%);max-height:88vh;overflow-y:auto;background:var(--paper);border:1px solid var(--gold-light);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
     .detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
@@ -649,7 +649,13 @@
     /* سبد خرید */  
     .overlay {  
       position: fixed;  
-      inset: 0;  
+      inset: auto;  
+      left: var(--visual-viewport-left, 0px);  
+      top: var(--visual-viewport-top, 0px);  
+      right: auto;  
+      bottom: auto;  
+      width: var(--visual-viewport-width, 100vw);  
+      height: var(--visual-viewport-height, 100vh);  
       background: #20181188;  
       z-index: 9999;  
       display: none;  
@@ -1028,8 +1034,9 @@
   
       /* --- استایل سبد خرید در موبایل --- */  
       .drawer {  
-        width: 100vw !important;  
-        max-width: 100vw !important;  
+        width: 100% !important;  
+        max-width: 100% !important;  
+        height: 100% !important;  
         padding: 16px !important;  
         padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;  
         box-sizing: border-box !important;  
@@ -1355,7 +1362,24 @@
     const toastEl = document.getElementById('toast');  
   
     let toastTimer;  
-  
+
+    function syncVisualViewport() {
+      const viewport = window.visualViewport;
+      if (!viewport) return;
+      const root = document.documentElement;
+      root.style.setProperty("--visual-viewport-left", viewport.offsetLeft + "px");
+      root.style.setProperty("--visual-viewport-top", viewport.offsetTop + "px");
+      root.style.setProperty("--visual-viewport-width", viewport.width + "px");
+      root.style.setProperty("--visual-viewport-height", viewport.height + "px");
+    }
+
+    syncVisualViewport();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncVisualViewport);
+      window.visualViewport.addEventListener("scroll", syncVisualViewport);
+    }
+    window.addEventListener("resize", syncVisualViewport);
+
     function toast(message) {  
       toastEl.textContent = message;  
       toastEl.classList.add('show');  

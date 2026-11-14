@@ -5,8 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f7f2e9">
-  <meta name="description" content="تکمیل و ثبت سفارش در فروشگاه کیف مارکت">
-  <title>تکمیل سفارش | کیف مارکت</title>
+  <meta name="description" content="ثبت درخواست خرید در فروشگاه کیف مارکت">
+  <title>ثبت درخواست خرید | کیف مارکت</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -513,14 +513,14 @@
   <main class="container">
 
     <div class="intro">
-      <h1>تکمیل سفارش</h1>
-      <p>فقط چند قدم تا ثبت سفارش و دریافت خریدت باقی مانده است.</p>
+      <h1>ثبت درخواست خرید</h1>
+      <p>اطلاعات خود را وارد کنید تا درخواست خرید شما برای بررسی ثبت شود.</p>
     </div>
 
     <div class="steps">
       <div class="step">۱. انتخاب محصول</div>
       <div class="step active">۲. اطلاعات خریدار</div>
-      <div class="step">۳. ثبت سفارش</div>
+      <div class="step">۳. ثبت درخواست خرید</div>
     </div>
 
     <div class="layout">
@@ -644,13 +644,13 @@
               type="submit"
               disabled
             >
-              ثبت سفارش
+              ثبت درخواست خرید
             </button>
 
           </form>
 
           <div id="message" class="message" role="status" aria-live="polite"></div>
-          <section id="customerInvoice" class="invoice" aria-label="فاکتور سفارش">
+          <section id="customerInvoice" class="invoice" aria-label="رسید ثبت درخواست خرید">
             <div id="invoiceContent"></div>
             <div class="invoice-actions">
               <button type="button" id="printInvoice">چاپ / ذخیره PDF</button>
@@ -835,8 +835,8 @@
 
     content.innerHTML = `
       <div class="invoice-head">
-        <div><h2>فاکتور سفارش کیف مارکت</h2><small>از خرید شما سپاسگزاریم</small></div>
-        <div><strong>شماره سفارش: ${escapeInvoice(orderId)}</strong><br><small>تاریخ: ${new Date().toLocaleDateString("fa-IR")}</small></div>
+        <div><h2>رسید ثبت درخواست خرید کیف مارکت</h2><small>درخواست شما برای بررسی به فروشگاه ارسال شده است.</small></div>
+        <div><strong>کد پیگیری درخواست: ${escapeInvoice(orderId)}</strong><br><small>تاریخ: ${new Date().toLocaleDateString("fa-IR")}</small></div>
       </div>
       <h3>اطلاعات خریدار</h3>
       <div class="invoice-customer">
@@ -852,7 +852,7 @@
         <tbody>${rows}</tbody>
       </table>
       <div class="invoice-total"><span>جمع مبلغ کالاها</span><span>${formatPrice(amount)}</span></div>
-      <div class="invoice-note">سفارش شما با درخواست ارسال به‌صورت پس‌کرایه ثبت شده است؛ هزینه حمل مطابق تعرفه شرکت حمل‌ونقل در مقصد از گیرنده دریافت می‌شود. پس از ارسال بسته، کد رهگیری برای پیگیری در اختیار شما قرار خواهد گرفت. چنانچه امکان ارسال به‌صورت پس‌کرایه فراهم نباشد یا مرسوله از روش دیگری ارسال شود، موضوع و جزئیات آن به شما اطلاع‌رسانی خواهد شد. پس‌کرایه صرفاً شامل هزینه حمل است و بهای کالا را دربرنمی‌گیرد. این فاکتور رسید ثبت سفارش است و به‌منزله رسید پرداخت نیست.</div>
+      <div class="invoice-note">سفارش شما با درخواست ارسال به‌صورت پس‌کرایه ثبت شده است؛ هزینه حمل مطابق تعرفه شرکت حمل‌ونقل در مقصد از گیرنده دریافت می‌شود. پس از ارسال بسته، کد رهگیری برای پیگیری در اختیار شما قرار خواهد گرفت. چنانچه امکان ارسال به‌صورت پس‌کرایه فراهم نباشد یا مرسوله از روش دیگری ارسال شود، موضوع و جزئیات آن به شما اطلاع‌رسانی خواهد شد. پس‌کرایه صرفاً شامل هزینه حمل است و بهای کالا را دربرنمی‌گیرد. این رسید فقط ثبت درخواست خرید را تأیید می‌کند و به‌منزله تأیید نهایی سفارش یا رسید پرداخت نیست.</div>
       <div class="invoice-note">مدیر فروشگاه: <strong>آقای مهرشاد ملکی</strong> | شماره تماس: <strong dir="ltr">${escapeInvoice("09913943650")}</strong></div>
       <div class="invoice-note" style="text-align:center;font-size:13px;font-weight:700">از اعتماد شما به کیف مارکت سپاسگزاریم؛ امیدواریم خریدی دلنشین و رضایت‌بخش را تجربه کنید.</div>
     `;
@@ -1197,19 +1197,19 @@
       orderCompleted = true;
 
       cartItemsElement.textContent =
-        "سفارش شما با موفقیت ثبت شد.";
+        "درخواست خرید شما با موفقیت ثبت شد.";
 
       // مبلغ کالاها پس از ثبت موفق سفارش در خلاصه باقی می‌ماند.
 
       showMessage(
-        "درخواست سفارش شما با موفقیت ثبت شد. کد پیگیری: " +
+        "درخواست خرید شما با موفقیت ثبت شد. کد پیگیری: " +
         result.order_id +
         "؛ هزینه ارسال و مبلغ نهایی پس از بررسی به شما اعلام می‌شود.",
         "success"
       );
       renderInvoice(result.order_id, customer, invoiceItems, invoiceAmount);
 
-      submitButton.textContent = "سفارش ثبت شد";
+      submitButton.textContent = "درخواست خرید ثبت شد";
       submitButton.disabled = true;
 
       retryButton.style.display = "none";

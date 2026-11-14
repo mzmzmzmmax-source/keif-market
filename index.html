@@ -625,9 +625,9 @@
     }  
   
     /* پنجره جزئیات محصول */
-    .detail-overlay{position:fixed;inset:0;width:100%;height:100%;z-index:9998;display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;overflow-y:auto;background:#20181199}
+    .detail-overlay{position:fixed;top:0;right:0;bottom:0;left:0;width:auto;height:auto;min-width:0;z-index:9998;display:none;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;background:#20181199}
     .detail-overlay.show{display:flex}
-    .detail-dialog{width:min(560px,100%);max-height:calc(100% - 0px);overflow-y:auto;box-sizing:border-box;background:var(--paper);border:1px solid var(--gold-light);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
+    .detail-dialog{width:min(560px,calc(100vw - 36px));max-width:100%;max-height:calc(100dvh - 36px);overflow-y:auto;box-sizing:border-box;background:var(--paper);border:1px solid var(--gold-light);border-radius:22px;padding:20px;box-shadow:var(--shadow)}
     .detail-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .detail-head h2{margin:0;font-size:19px}
     .detail-gallery{position:relative;background:#f1e8dc;border-radius:15px;overflow:hidden;margin-bottom:14px;touch-action:pan-y}
@@ -650,8 +650,13 @@
     .overlay {  
       position: fixed;  
       inset: 0;  
-      width: 100%;  
-      height: 100%;  
+      top: 0;  
+      right: 0;  
+      bottom: 0;  
+      left: 0;  
+      width: auto;  
+      height: auto;  
+      min-width: 0;  
       background: #20181188;  
       z-index: 9999;  
       display: none;  
@@ -666,9 +671,9 @@
   
     .drawer {  
       background: var(--paper);  
-      height: 100%;  
+      height: 100dvh;  
       width: min(440px, 100%);  
-      max-width: 100vw;  
+      max-width: 100%;  
       min-width: 0;  
       padding: 23px;  
       overflow-x: hidden;  

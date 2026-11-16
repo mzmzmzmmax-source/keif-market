@@ -1677,86 +1677,107 @@
       document.getElementById('cartTotal').textContent = fmt(total);
     }
 
-    async function loadStore() {  
-      loadMessage.textContent = 'در حال دریافت محصولات فروشگاه...';  
-      loadMessage.style.display = '';  
-  
-      try {  
-        if (  
-          !window.supabase ||  
-          typeof window.supabase.createClient !== 'function'  
-        ) {  
-          throw new Error(  
-            'کتابخانه Supabase بارگذاری نشد. اتصال اینترنت را بررسی کن.'  
-          );  
-        }  
-  
-        const db = window.supabase.createClient(  
-          SUPABASE_URL,  
-          SUPABASE_ANON_KEY  
-        );  
-  
-        const [categoryResult, productResult, variantResult, imageResult] = await Promise.all([
+    async function loadStore() {
+      loadMessage.textContent = 'در حال دریافت محصولات فروشگاه...';
+      loadMessage.style.display = '';
+
+      try {
+        if (
+          !window.supabase ||
+          typeof window.supabase.createClient !== 'function'
+        ) {
+          throw new Error(
+            'کتابخانه Supabase بارگذاری نشد. اتصال اینترنت را بررسی کن.'
+          );
+        }
+
+        const db = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY
+        );
+
+        // دریافت اطلاعات اصلی فروشگاه مستقل از تصاویر و رنگ‌ها
+        const [categoryState, productState] = await Promise.allSettled([
           db.from('categories').select('id,name').eq('is_active', true).order('name'),
           db.from('products').select(`
             id, name, description, price, is_active, category_id, categories(name)
-          `).eq('is_active', true).order('created_at', { ascending: false }),
+          `).eq('is_active', true).order('created_at', { ascending: false })
+        ]);
+
+        if (productState.status === 'rejected' || productState.value.error) {
+          const productError = productState.status === 'rejected'
+            ? productState.reason
+            : productState.value.error;
+          throw new Error('دریافت محصولات: ' + (productError.message || productError));
+        }
+
+        products = productState.value.data || [];
+        categories = categoryState.status === 'fulfilled' && !categoryState.value.error
+          ? (categoryState.value.data || [])
+          : [];
+
+        // محصولات را بلافاصله نمایش بده؛ خرابی دسته‌بندی نباید آن‌ها را پنهان کند.
+        renderCategories();
+        renderProducts();
+        renderCart();
+
+        loadMessage.textContent = products.length
+          ? ''
+          : 'هنوز محصول فعالی برای نمایش ثبت نشده است.';
+
+        if (categoryState.status === 'rejected' ||
+            (categoryState.status === 'fulfilled' && categoryState.value.error)) {
+          console.warn('دریافت دسته‌بندی‌ها با مشکل روبه‌رو شد؛ محصولات همچنان نمایش داده شدند.',
+            categoryState.status === 'rejected' ? categoryState.reason : categoryState.value.error);
+        }
+
+        // اطلاعات تکمیلی مستقل دریافت می‌شوند تا خطای یک بخش، بخش دیگر را مختل نکند.
+        const [variantState, imageState] = await Promise.allSettled([
           db.from('product_variants')
             .select('id,product_id,color_id,stock,is_active,colors(id,name,hex_code,is_active)')
             .eq('is_active', true),
           db.from('product_images')
             .select('id,product_id,variant_id,image_url,sort_order,is_primary')
             .order('sort_order', { ascending: true })
-        ]);  
-  
-        if (categoryResult.error) {  
-          throw new Error(  
-            'دریافت دسته‌بندی‌ها: ' + categoryResult.error.message  
-          );  
-        }  
-  
-        if (productResult.error) {  
-          throw new Error(  
-            'دریافت محصولات: ' + productResult.error.message  
-          );  
-        }  
-  
-        if (variantResult.error) {
-          throw new Error('دریافت رنگ‌ها و موجودی: ' + variantResult.error.message);
-        }
-        if (imageResult.error) {
-          throw new Error('دریافت تصاویر محصولات: ' + imageResult.error.message);
+        ]);
+
+        if (variantState.status === 'fulfilled' && !variantState.value.error) {
+          variants = (variantState.value.data || []).filter(v =>
+            v.colors && v.colors.is_active === true
+          );
+        } else {
+          variants = [];
+          console.warn('دریافت رنگ‌ها و موجودی انجام نشد:',
+            variantState.status === 'rejected' ? variantState.reason : variantState.value.error);
         }
 
-        categories = categoryResult.data || [];
-        products = productResult.data || [];
-        variants = (variantResult.data || []).filter(v => v.colors && v.colors.is_active === true);
-        productImages = imageResult.data || [];  
-  
-        renderCategories();  
-        renderProducts();  
-        renderCart();  
-  
-        loadMessage.textContent = products.length  
-          ? ''  
-          : 'هنوز محصول فعالی برای نمایش ثبت نشده است.';  
-  
-      } catch (error) {  
-        console.error(error);  
-  
-        loadMessage.textContent =  
-          'خطا در دریافت اطلاعات فروشگاه: ' +  
-          (error.message || error);  
-  
-        grid.innerHTML = `  
-          <div class="empty">  
-            بارگذاری محصولات انجام نشد.  
-            تنظیمات دسترسی خواندن عمومی در Supabase باید بررسی شود.  
-          </div>  
-        `;  
-      }  
-    }  
-  
+        if (imageState.status === 'fulfilled' && !imageState.value.error) {
+          productImages = imageState.value.data || [];
+        } else {
+          productImages = [];
+          console.warn('دریافت تصاویر محصولات انجام نشد:',
+            imageState.status === 'rejected' ? imageState.reason : imageState.value.error);
+        }
+
+        // فقط کارت‌ها را با اطلاعات تکمیلی تازه کن؛ فهرست محصولات حفظ می‌شود.
+        renderProducts();
+
+      } catch (error) {
+        console.error(error);
+
+        loadMessage.textContent =
+          'خطا در دریافت اطلاعات فروشگاه: ' +
+          (error.message || error);
+
+        grid.innerHTML = `
+          <div class="empty">
+            بارگذاری محصولات انجام نشد.
+            لطفاً اتصال اینترنت را بررسی و صفحه را دوباره بارگذاری کن.
+          </div>
+        `;
+      }
+    }
+
     function bindEvents() {  
       document  
         .getElementById('search')  

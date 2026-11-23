@@ -15,7 +15,7 @@ main{width:min(100%,560px);background:var(--paper);border:1px solid var(--line);
 h1{font-size:22px;margin:8px 0 12px}p{line-height:2;color:var(--muted);margin:8px 0}
 .meta{margin:22px 0;padding:14px;border:1px solid var(--line);border-radius:12px;text-align:right;font-size:14px}
 a{display:inline-block;margin-top:16px;color:var(--brown);border:1px solid var(--gold);padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700}
-small{display:block;margin-top:18px;color:var(--muted)}
+small{display:block;margin-top:18px;color:var(--muted)}\n.retry{display:none;margin-top:18px;text-align:right}.retry input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit;margin:8px 0}.retry button{width:100%;padding:12px;border:0;border-radius:10px;background:var(--brown);color:white;font:inherit;font-weight:700;cursor:pointer}.retry button:disabled{opacity:.6}
 </style>
 </head>
 <body>
@@ -34,7 +34,7 @@ small{display:block;margin-top:18px;color:var(--muted)}
   const title=document.getElementById('title');
   const message=document.getElementById('message');
   const mark=document.getElementById('mark');
-  const meta=document.getElementById('meta');
+  const meta=document.getElementById('meta');\n  const retryForm=document.getElementById('retryForm');\n  const retryButton=document.getElementById('retryButton');\n  const retryPhone=document.getElementById('retryPhone');
   if(!/^\d+$/.test(orderId||'')){
     title.textContent='وضعیت سفارش مشخص نیست';
     message.textContent='شناسه سفارش در نشانی صفحه وجود ندارد. برای بررسی با پشتیبانی کیف مارکت تماس بگیرید.';
@@ -50,7 +50,7 @@ small{display:block;margin-top:18px;color:var(--muted)}
       mark.textContent='✓';title.textContent='پرداخت با موفقیت تأیید شد';
       message.textContent='مبلغ کالاها دریافت و سفارش شما ثبت پرداخت شد. هزینه ارسال هنگام تحویل، به‌صورت پس‌کرایه دریافت می‌شود.';
       if(data.ref_id)meta.textContent+=' | کد مرجع پرداخت: '+data.ref_id;
-    }else if(data.payment_attempt_status==='pending'){
+    }else if(['pending','creating'].includes(data.payment_attempt_status)){
       mark.textContent='…';title.textContent='پرداخت در حال بررسی است';
       message.textContent='هنوز تأیید نهایی از درگاه به سرور نرسیده است. لطفاً از پرداخت دوباره خودداری کنید و کمی بعد دوباره این صفحه را بررسی کنید.';
     }else{

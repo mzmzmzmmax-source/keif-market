@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نتیجه پرداخت | کیف مارکت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--cream:#f7f2e9;--paper:#fffdf8;--brown:#4b3528;--muted:#806d5c;--gold:#b79559;--line:#e9dfd0}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--cream);color:var(--brown);font-family:Vazirmatn,Tahoma,sans-serif;display:grid;place-items:center;padding:20px}
+main{width:min(100%,560px);background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:30px 24px;box-shadow:0 12px 36px #4b35280d;text-align:center}
+.mark{width:58px;height:58px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#f1e8d8;color:var(--gold);font-size:28px;font-weight:800}
+h1{font-size:22px;margin:8px 0 12px}p{line-height:2;color:var(--muted);margin:8px 0}
+.meta{margin:22px 0;padding:14px;border:1px solid var(--line);border-radius:12px;text-align:right;font-size:14px}
+a{display:inline-block;margin-top:16px;color:var(--brown);border:1px solid var(--gold);padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:700}
+small{display:block;margin-top:18px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <div class="mark" id="mark">…</div>
+  <h1 id="title">در حال بررسی وضعیت پرداخت</h1>
+  <p id="message">لطفاً چند لحظه صبر کنید؛ وضعیت پرداخت از سرور فروشگاه دریافت می‌شود.</p>
+  <div class="meta" id="meta" hidden></div>
+  <a href="./index.html">بازگشت به کیف مارکت</a>
+  <small>هزینه ارسال سفارش به‌صورت پس‌کرایه و هنگام تحویل دریافت می‌شود.</small>
+</main>
+<script>
+(async function(){
+  const params=new URLSearchParams(location.search);
+  const orderId=params.get('order_id');
+  const title=document.getElementById('title');
+  const message=document.getElementById('message');
+  const mark=document.getElementById('mark');
+  const meta=document.getElementById('meta');
+  if(!/^\d+$/.test(orderId||'')){
+    title.textContent='وضعیت سفارش مشخص نیست';
+    message.textContent='شناسه سفارش در نشانی صفحه وجود ندارد. برای بررسی با پشتیبانی کیف مارکت تماس بگیرید.';
+    mark.textContent='؟';return;
+  }
+  try{
+    const response=await fetch('https://api.kif-market.ir/payments/status?order_id='+encodeURIComponent(orderId),{cache:'no-store'});
+    const data=await response.json();
+    if(!response.ok||!data.success)throw new Error('status unavailable');
+    meta.hidden=false;
+    meta.textContent='کد سفارش: '+data.order_id;
+    if(data.payment_status==='paid'){
+      mark.textContent='✓';title.textContent='پرداخت با موفقیت تأیید شد';
+      message.textContent='مبلغ کالاها دریافت و سفارش شما ثبت پرداخت شد. هزینه ارسال هنگام تحویل، به‌صورت پس‌کرایه دریافت می‌شود.';
+      if(data.ref_id)meta.textContent+=' | کد مرجع پرداخت: '+data.ref_id;
+    }else if(data.payment_attempt_status==='pending'){
+      mark.textContent='…';title.textContent='پرداخت در حال بررسی است';
+      message.textContent='هنوز تأیید نهایی از درگاه به سرور نرسیده است. لطفاً از پرداخت دوباره خودداری کنید و کمی بعد دوباره این صفحه را بررسی کنید.';
+    }else{
+      mark.textContent='!';title.textContent='پرداخت تأیید نشد';
+      message.textContent='سفارش در سامانه ثبت شده، اما پرداخت آن تأیید نشده است. برای جلوگیری از ثبت سفارش تکراری، پیش از اقدام دوباره با پشتیبانی کیف مارکت هماهنگ کنید.';
+    }
+  }catch(e){
+    mark.textContent='…';title.textContent='دریافت نتیجه پرداخت ممکن نشد';
+    message.textContent='اتصال به سرور موقتاً برقرار نشد. این پیام به معنی ناموفق بودن قطعی پرداخت نیست؛ بعداً همین صفحه را دوباره باز کنید.';
+  }
+})();
+</script>
+</body>
+</html>

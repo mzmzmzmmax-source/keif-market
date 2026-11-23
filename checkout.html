@@ -697,7 +697,7 @@
           </div>
 
           <div class="security-note">
-            ثبت این فرم فقط درخواست خرید را ثبت می‌کند و به معنی انعقاد قرارداد، تأیید نهایی سفارش یا پرداخت نیست. پس از بررسی موجودی و نشانی، مبلغ نهایی، هزینه ارسال و روش پرداخت به شما اعلام می‌شود. سفارش فقط پس از موافقت شما با جزئیات نهایی و تأیید فروشگاه قطعی خواهد شد؛ اگر شرایط اعلام‌شده را نپذیرید، می‌توانید پیش از قطعی‌شدن سفارش از ادامه خرید منصرف شوید. درگاه پرداخت آنلاین در حال حاضر فعال نیست و نیازی به ارسال اطلاعات محرمانه بانکی نیست.
+            با ثبت سفارش، بهای کالاها بلافاصله از طریق درگاه امن زرین‌پال پرداخت می‌شود. هزینه حمل به‌صورت پس‌کرایه است و هنگام تحویل مرسوله از گیرنده دریافت می‌شود. اطلاعات کارت بانکی را فقط در صفحه رسمی زرین‌پال وارد کنید؛ کیف مارکت اطلاعات کارت شما را دریافت یا ذخیره نمی‌کند.
           </div>
 
         </div>
@@ -1122,7 +1122,7 @@
 
     isSubmitting = true;
     submitButton.disabled = true;
-    submitButton.textContent = "در حال ثبت سفارش...";
+    submitButton.textContent = "در حال ثبت سفارش و آماده‌سازی پرداخت...";
     retryButton.style.display = "none";
     hideMessage();
 
@@ -1179,48 +1179,68 @@
         );
       }
 
-      // حفظ اطلاعات فاکتور پیش از پاک‌سازی سبد خرید
-      const invoiceItems = productsInCart.map(item => ({...item}));
-      const invoiceAmount = totalAmount;
+      // سفارش ثبت شد؛ حالا فقط مبلغ کالاها از API امن سرور برای پرداخت فرستاده می‌شود.
+      submitButton.textContent = "در حال اتصال به درگاه پرداخت...";
+      const paymentController = new AbortController();
+      const paymentTimeout = setTimeout(() => paymentController.abort(), 25000);
+      let paymentResponse;
+      try {
+        paymentResponse = await fetch("https://api.kif-market.ir/payments/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: result.order_id,
+            idempotency_key: createIdempotencyUuid(),
+            customer_phone: customer.customer_phone
+          }),
+          signal: paymentController.signal
+        });
+      } finally {
+        clearTimeout(paymentTimeout);
+      }
 
-      // فقط پس از تأیید موفقیت سرور، سبد خرید پاک می‌شود.
+      let paymentResult;
+      try {
+        paymentResult = await paymentResponse.json();
+      } catch {
+        throw new Error("سفارش ثبت شده، اما پاسخ درگاه قابل خواندن نیست. دوباره تلاش کن؛ سفارش تکراری ساخته نخواهد شد.");
+      }
+      if (!paymentResponse.ok || !paymentResult.success || !paymentResult.redirect_url) {
+        throw new Error(paymentResult.error || "سفارش ثبت شد، اما شروع پرداخت انجام نشد. برای تلاش دوباره دکمه را بزن.");
+      }
+
+      // فقط آدرس رسمی زرین‌پال پذیرفته می‌شود.
+      const paymentUrl = new URL(paymentResult.redirect_url);
+      if (!["payment.zarinpal.com", "sandbox.zarinpal.com"].includes(paymentUrl.hostname) ||
+          paymentUrl.protocol !== "https:") {
+        throw new Error("نشانی درگاه پرداخت معتبر نیست. با پشتیبانی تماس بگیر.");
+      }
+
       localStorage.removeItem("km_cart");
       try {
         const savedPending = JSON.parse(localStorage.getItem(IDEMPOTENCY_STORAGE_KEY) || "null");
         if (savedPending && savedPending.key === requestIdentity.key) {
           localStorage.removeItem(IDEMPOTENCY_STORAGE_KEY);
         }
+        localStorage.setItem("km_last_payment_order_id", String(result.order_id));
       } catch (storageError) {
-        // سفارش در سرور ثبت شده؛ خطای پاک‌سازی شناسه نباید موفقیت را به شکست تبدیل کند.
-        console.warn("Could not clear pending order identity:", storageError);
+        console.warn("Could not clear temporary checkout data:", storageError);
       }
 
       productsInCart = [];
       orderCompleted = true;
-
-      cartItemsElement.textContent =
-        "درخواست خرید شما با موفقیت ثبت شد.";
-
-      // مبلغ کالاها پس از ثبت موفق سفارش در خلاصه باقی می‌ماند.
-
-      showMessage(
-        "درخواست خرید شما با موفقیت ثبت شد. کد پیگیری: " +
-        result.order_id +
-        "؛ هزینه ارسال و مبلغ نهایی پس از بررسی به شما اعلام می‌شود.",
-        "success"
-      );
-      renderInvoice(result.order_id, customer, invoiceItems, invoiceAmount);
-
-      submitButton.textContent = "درخواست خرید ثبت شد";
+      cartItemsElement.textContent = "سفارش ثبت شد؛ در حال انتقال امن به درگاه زرین‌پال...";
+      totalElement.textContent = formatPrice(totalAmount);
+      submitButton.textContent = "در حال انتقال به درگاه...";
       submitButton.disabled = true;
-
       retryButton.style.display = "none";
+      window.location.assign(paymentUrl.toString());
 
     } catch (error) {
       console.error("Order submission error:", error);
 
       const errorText = error.name === "AbortError"
-        ? "زمان انتظار برای پاسخ سرور تمام شد. پیش از تلاش مجدد، وضعیت سفارش را بررسی کن تا سفارش تکراری ثبت نشود."
+        ? "زمان انتظار سرور تمام شد. سفارش ممکن است ثبت شده باشد؛ دوباره تلاش کن تا همان سفارش پیگیری شود."
         : error.message || "خطا در ارتباط با سرور.";
 
       showMessage(errorText, "error");

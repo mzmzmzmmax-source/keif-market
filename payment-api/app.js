@@ -3,7 +3,6 @@
 // Kif Market payment API reference implementation.
 // Node.js 20+; built-in fetch only. Do not deploy until Sandbox tests pass.
 const http = require('node:http');
-const crypto = require('node:crypto');
 
 const PORT = Number(process.env.PORT || 3000);
 const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://mzmzmzmmax-source.github.io';
@@ -105,7 +104,8 @@ async function createPayment(req, res) {
   if (!configReady()) return send(res, 503, { success: false, error: 'payment service is not configured' });
   const input = await readJson(req);
   const orderId = Number(input.order_id);
-  if (!Number.isSafeInteger(orderId) || orderId <= 0 || !isUuid(input.idempotency_key)) {
+  const suppliedPhone = String(input.customer_phone || '').replace(/[\\s-]/g, '');
+  if (!Number.isSafeInteger(orderId) || orderId <= 0 || !isUuid(input.idempotency_key) || !/^09\\d{9}$/.test(suppliedPhone)) {
     return send(res, 400, { success: false, error: 'invalid order or idempotency key' });
   }
 
@@ -113,6 +113,7 @@ async function createPayment(req, res) {
   const order = orders && orders[0];
   if (!order) return send(res, 404, { success: false, error: 'order not found' });
   if (order.payment_status === 'paid') return send(res, 409, { success: false, error: 'order already paid' });
+  if (String(order.customer_phone || '') !== suppliedPhone) return send(res, 403, { success: false, error: 'order details do not match' });
   if (order.status === 'cancelled' || !Number.isSafeInteger(Number(order.subtotal)) || Number(order.subtotal) <= 0) {
     return send(res, 409, { success: false, error: 'order is not payable' });
   }
@@ -134,6 +135,9 @@ async function createPayment(req, res) {
       order_id: orderId,
       redirect_url: host + '/pg/StartPay/' + encodeURIComponent(attempt.authority)
     });
+  }
+  if (attemptInfo.reused === true && attempt.status === 'creating') {
+    return send(res, 409, { success: false, error: 'payment attempt is already being prepared; retry shortly' });
   }
   if (attempt.status !== 'creating') {
     return send(res, 409, { success: false, error: 'payment attempt is not startable' });
